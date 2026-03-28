@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.12.0](https://github.com/njhoffman/noice.nvim/compare/v4.11.0...v4.12.0) (2026-03-28)
+
+
+### Breaking Changes
+
+* **compat:** bump minimum Neovim version from 0.9.0 to 0.10.0
+
+### Features
+
+* **confirm:** configurable alignment of choices line ([#1090](https://github.com/folke/noice.nvim/pull/1090))
+* **msg:** add shell_out, shell_err, shell_ret to default message routes for Neovim 0.11+ ([#1098](https://github.com/folke/noice.nvim/pull/1098))
+* **tests:** add filter and manager test suites (43 new test cases)
+
+### Bug Fixes
+
+* **compat:** replace all deprecated Neovim APIs (vim.loop, vim.tbl_isempty, nvim_get_hl_by_name, nvim_buf/win_set/get_option, vim.lsp.get_client_by_id)
+* **compat:** remove dead compatibility code for Neovim &lt; 0.10 (fix_incsearch, LspProgress handler fallback, data.result compat)
+* **block:** strip ANSI coloring control sequences from message output ([#1124](https://github.com/folke/noice.nvim/pull/1124))
+* **fzf-lua:** preserve message ordering in fzf picker ([#1038](https://github.com/folke/noice.nvim/pull/1038))
+* **lsp:** highlight active parameter in multiline signatures ([#1064](https://github.com/folke/noice.nvim/pull/1064))
+* **preset:** prevent confirm dialog from overlapping cmdline_popup ([#1189](https://github.com/folke/noice.nvim/pull/1189))
+* **scrollbar:** fix cmdline completion scrollbar calculation ([#1120](https://github.com/folke/noice.nvim/pull/1120))
+* **showMessage:** use on_message handler instead of _on_message ([#1103](https://github.com/folke/noice.nvim/pull/1103))
+
 ## [4.11.0](https://github.com/folke/noice.nvim/compare/v4.10.0...v4.11.0) (2025-11-03)
 
 
