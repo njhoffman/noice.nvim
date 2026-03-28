@@ -5,10 +5,10 @@ local Lsp = require("noice.lsp")
 local Treesitter = require("noice.text.treesitter")
 local Util = require("noice.util")
 
-local start = vim.health.start or vim.health.report_start
-local ok = vim.health.ok or vim.health.report_ok
-local warn = vim.health.warn or vim.health.report_warn
-local error = vim.health.error or vim.health.report_error
+local start = vim.health.start
+local ok = vim.health.ok
+local warn = vim.health.warn
+local error = vim.health.error
 
 local M = {}
 
@@ -58,14 +58,13 @@ function M.check(opts)
 
   log.start()
 
-  if vim.fn.has("nvim-0.9.0") ~= 1 then
-    log.error("Noice requires Neovim >= 0.9.0")
-    -- require("noice.util").error("Noice needs Neovim >= 0.9.0 (nightly)")
+  if vim.fn.has("nvim-0.10.0") ~= 1 then
+    log.error("Noice requires Neovim >= 0.10.0")
     if not opts.checkhealth then
       return
     end
   else
-    log.ok("*Neovim* >= 0.9.0")
+    log.ok("*Neovim* >= 0.10.0")
     if opts.checkhealth and vim.fn.has("nvim-0.11.0") ~= 1 then
       log.warn("*Neovim* >= 0.11 is highly recommended, since it fixes some issues related to `vim.ui_attach`")
     end

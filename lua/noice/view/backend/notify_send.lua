@@ -2,7 +2,7 @@ local require = require("noice.util.lazy")
 
 local Util = require("noice.util")
 local View = require("noice.view")
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 ---@class NoiceNotifySendOptions
 ---@field title string

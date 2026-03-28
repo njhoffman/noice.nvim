@@ -3,7 +3,7 @@ local require = require("noice.util.lazy")
 local Api = require("noice.api")
 local Cmdline = require("noice.ui.cmdline")
 local Util = require("noice.util")
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 -- HACK: a bunch of hacks to make Noice behave
 local M = {}
@@ -19,12 +19,6 @@ function M.enable()
   M.reset_augroup()
   M.fix_cmp()
   M.fix_vim_sleuth()
-  -- M.fix_redraw()
-
-  -- Hacks for Neovim < 0.10
-  if vim.fn.has("nvim-0.10") == 0 then
-    M.fix_incsearch()
-  end
 end
 
 function M.fix_redraw()
@@ -73,32 +67,6 @@ function M.fix_nohlsearch()
     end,
   })
   M.fix_nohlsearch()
-end
-
----@see https://github.com/neovim/neovim/issues/17810
-function M.fix_incsearch()
-  ---@type integer|nil
-  local conceallevel
-
-  vim.api.nvim_create_autocmd("CmdlineEnter", {
-    group = M.group,
-    callback = function(event)
-      if event.match == "/" or event.match == "?" then
-        conceallevel = vim.wo.conceallevel
-        vim.opt_local.conceallevel = 0
-      end
-    end,
-  })
-
-  vim.api.nvim_create_autocmd("CmdlineLeave", {
-    group = M.group,
-    callback = function(event)
-      if conceallevel and (event.match == "/" or event.match == "?") then
-        vim.opt_local.conceallevel = conceallevel
-        conceallevel = nil
-      end
-    end,
-  })
 end
 
 -- Fixes cmp cmdline position

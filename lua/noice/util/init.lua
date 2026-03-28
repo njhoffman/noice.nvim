@@ -5,7 +5,7 @@ local Hacks = require("noice.util.hacks")
 
 local M = {}
 
-M.islist = vim.islist or vim.tbl_islist
+M.islist = vim.islist
 
 M.stats = require("noice.util.stats")
 M.call = require("noice.util.call")
@@ -93,16 +93,12 @@ end
 ---@param options table<string, any>
 function M.wo(win, options)
   for k, v in pairs(options) do
-    if vim.api.nvim_set_option_value then
-      vim.api.nvim_set_option_value(k, v, { scope = "local", win = win })
-    else
-      vim.wo[win][k] = v
-    end
+    vim.api.nvim_set_option_value(k, v, { scope = "local", win = win })
   end
 end
 
 function M.debounce(ms, fn)
-  local timer = (vim.uv or vim.loop).new_timer()
+  local timer = vim.uv.new_timer()
   return function(...)
     local argv = vim.F.pack_len(...)
     timer:start(ms, 0, function()
@@ -279,10 +275,10 @@ function M.notify(msg, level, ...)
     require("notify").notify(msg:format(...), level, {
       title = "noice.nvim",
       on_open = function(win)
-        vim.api.nvim_win_set_option(win, "conceallevel", 3)
+        vim.wo[win].conceallevel = 3
         local buf = vim.api.nvim_win_get_buf(win)
-        vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
-        vim.api.nvim_win_set_option(win, "spell", false)
+        vim.bo[buf].filetype = "markdown"
+        vim.wo[win].spell = false
       end,
     })
   else

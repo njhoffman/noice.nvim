@@ -1,5 +1,5 @@
-local View = require("noice.view")
 local Config = require("noice.config")
+local View = require("noice.view")
 Config.setup()
 
 describe("checking views", function()

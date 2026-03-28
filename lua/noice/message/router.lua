@@ -221,7 +221,7 @@ function M.update()
     M._tick = next_tick
   end
 
-  if not vim.tbl_isempty(updates) then
+  if next(updates) ~= nil then
     Util.stats.track("router.update.updated")
     Util.redraw()
   end

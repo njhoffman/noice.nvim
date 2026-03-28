@@ -16,12 +16,12 @@ M._running = false
 ---@param data {client_id: integer, params: lsp.ProgressParams}
 function M.progress(data)
   local client_id = data.client_id
-  local params = data.params or data.result -- TODO: Remove data.result after nvim 0.10 release
+  local params = data.params
   local id = client_id .. "." .. params.token
 
   local message = M._progress[id]
   if not message then
-    local client = vim.lsp.get_client_by_id(client_id)
+    local client = vim.lsp.get_clients({ id = client_id })[1]
     -- should not happen, but it does for some reason
     if not client then
       return
@@ -61,9 +61,9 @@ function M.close(id)
 end
 
 function M._update()
-  if not vim.tbl_isempty(M._progress) then
+  if next(M._progress) ~= nil then
     for id, message in pairs(M._progress) do
-      local client = vim.lsp.get_client_by_id(message.opts.progress.client_id)
+      local client = vim.lsp.get_clients({ id = message.opts.progress.client_id })[1]
       if not client then
         M.close(id)
       end
@@ -84,30 +84,16 @@ end
 function M.setup()
   M.update = Util.interval(Config.options.lsp.progress.throttle, M._update, {
     enabled = function()
-      return not vim.tbl_isempty(M._progress)
+      return next(M._progress) ~= nil
     end,
   })
 
-  -- Neovim >= 0.10.0
-  local ok = pcall(vim.api.nvim_create_autocmd, "LspProgress", {
+  vim.api.nvim_create_autocmd("LspProgress", {
     group = vim.api.nvim_create_augroup("noice_lsp_progress", { clear = true }),
     callback = function(event)
       M.progress(event.data)
     end,
   })
-
-  -- Neovim < 0.10.0
-  if not ok then
-    local orig = vim.lsp.handlers["$/progress"]
-    vim.lsp.handlers["$/progress"] = function(...)
-      local params = select(2, ...)
-      local ctx = select(3, ...)
-      Util.try(function()
-        M.progress({ client_id = ctx.client_id, params = params })
-      end)
-      orig(...)
-    end
-  end
 end
 
 return M

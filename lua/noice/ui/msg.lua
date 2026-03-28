@@ -134,7 +134,7 @@ function M.on_showmode(event, content)
     return
   end
   local message = M.get(event)
-  if vim.tbl_isempty(content) then
+  if next(content) == nil then
     if event == "msg_showmode" then
       Manager.remove(message)
     end

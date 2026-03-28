@@ -16,7 +16,7 @@ M._handlers = {}
 
 local queue = {}
 
-local timer = (vim.uv or vim.loop).new_timer()
+local timer = vim.uv.new_timer()
 local processing = false
 
 function M.process_queue()
@@ -97,7 +97,7 @@ end
 function M.enable()
   local options = M.setup()
 
-  if vim.tbl_isempty(options) then
+  if next(options) == nil then
     if Config.options.debug then
       vim.schedule(function()
         Util.warn("No extensions enabled")

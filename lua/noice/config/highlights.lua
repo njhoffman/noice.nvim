@@ -81,11 +81,8 @@ function M.add(hl_group, link)
 end
 
 function M.get_link(hl_group)
-  local ok, opts = pcall(vim.api.nvim_get_hl_by_name, hl_group, true)
-  if opts then
-    opts[vim.type_idx] = nil
-  end
-  if not ok or vim.tbl_isempty(opts) then
+  local ok, opts = pcall(vim.api.nvim_get_hl, 0, { name = hl_group, link = false })
+  if not ok or next(opts) == nil then
     opts = { link = hl_group }
   end
   opts.default = true
