@@ -174,7 +174,6 @@ function Block:append(contents, highlight)
         text = text:gsub("%^%[%[[%d;]*%a", "")
       end
 
-
       ---@type string|table|nil
       local hl_group
       if type(hl_id) == "number" then

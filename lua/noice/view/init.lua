@@ -15,6 +15,7 @@ local Util = require("noice.util")
 ---@field align? NoiceAlign
 ---@field lang? string
 ---@field view string
+---@field tail? boolean scroll to the bottom on open and when new messages are added
 
 ---@alias NoiceViewOptions NoiceViewBaseOptions|NoiceNuiOptions|NoiceNotifyOptions
 
@@ -226,19 +227,37 @@ function View:set_win_options(win)
   if self._opts.win_options then
     Util.wo(win, self._opts.win_options)
   end
-  -- reset cursor on show
-  vim.api.nvim_win_set_cursor(win, { 1, 0 })
-  if self._opts.type == "split" then
-    vim.schedule(function()
-      -- this is needed to make the nui split behave with vim.go.splitkeep
-      if win and vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_set_cursor(win, { 1, 0 })
-        vim.api.nvim_win_call(win, function()
-          vim.cmd([[noautocmd silent! normal! zt]])
-        end)
-      end
-    end)
+  if self._opts.tail then
+    self:scroll_to_bottom(win)
+  else
+    -- reset cursor on show
+    vim.api.nvim_win_set_cursor(win, { 1, 0 })
+    if self._opts.type == "split" then
+      vim.schedule(function()
+        -- this is needed to make the nui split behave with vim.go.splitkeep
+        if win and vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_win_set_cursor(win, { 1, 0 })
+          vim.api.nvim_win_call(win, function()
+            vim.cmd([[noautocmd silent! normal! zt]])
+          end)
+        end
+      end)
+    end
   end
+end
+
+---@param win window
+function View:scroll_to_bottom(win)
+  vim.schedule(function()
+    if win and vim.api.nvim_win_is_valid(win) then
+      local buf = vim.api.nvim_win_get_buf(win)
+      local line_count = vim.api.nvim_buf_line_count(buf)
+      vim.api.nvim_win_set_cursor(win, { line_count, 0 })
+      vim.api.nvim_win_call(win, function()
+        vim.cmd([[noautocmd silent! normal! zb]])
+      end)
+    end
+  end)
 end
 
 ---@param buf number buffer number

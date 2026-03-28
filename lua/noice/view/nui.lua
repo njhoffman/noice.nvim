@@ -296,6 +296,8 @@ function NuiView:show()
   if not self._visible then
     self:set_win_options(self._nui.winid)
     self:update_layout()
+  elseif self._opts.tail then
+    self:scroll_to_bottom(self._nui.winid)
   end
 
   if self._scroll then

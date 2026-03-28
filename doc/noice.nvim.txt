@@ -519,6 +519,20 @@ OptionDescriptionsize, positionSize, position and their constituents can additio
 <
 
 scrollbarSet to false to hide the scrollbar.
+tailWhen set to true, the view automatically scrolls to the bottom on open
+and whenever new messages are added. Useful for log-style views where
+the most recent messages are at the end. Example:
+
+>lua
+    require("noice").setup({
+      views = {
+        split = {
+          tail = true,
+        },
+      },
+    })
+<
+
 NOTIFY OPTIONS ~
 
   -------------------------------------------------------------------------------------------------
