@@ -109,7 +109,7 @@ function NotifyView:notify_render(messages, render, content)
       ---@type number
       local width = config.minimum_width()
       for _, line in pairs(lines) do
-        width = math.max(width, vim.str_utfindex(line))
+        width = math.max(width, vim.str_utfindex(line, "utf-32"))
       end
       width = math.min(config.max_width() or 1000, width)
       local height = math.min(config.max_height() or 1000, #lines)
