@@ -12,6 +12,7 @@ local View = require("noice.view")
 ---@field replace boolean Replace existing notification or create a new one
 ---@field render? notify.RenderFun|string
 ---@field timeout? integer
+---@field on_notify? fun(info: {content: string, level?: string|number, title?: string, messages: NoiceMessage[]}) Called for each notification shown by this backend
 local defaults = {
   title = "Notification",
   merge = false,
@@ -163,6 +164,20 @@ function NotifyView:_notify(msg)
 
   if msg.opts and msg.opts.is_nil then
     content = nil
+  end
+
+  if content and self._opts.on_notify then
+    local ok, err = pcall(self._opts.on_notify, {
+      content = content,
+      level = level,
+      title = opts.title,
+      messages = msg.messages,
+    })
+    if not ok then
+      -- A failing hook must not lose the notification. error_once goes straight to nvim-notify, so it
+      -- can't re-enter this view, and it formats its result again, hence the escaped %.
+      Util.error_once("`on_notify` failed: %s", (tostring(err):gsub("%%", "%%%%")))
+    end
   end
 
   local id = require("notify")(content, level, opts)

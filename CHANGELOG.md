@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [4.14.0] - 2026-11-05
+
+### Added
+
+- `on_notify` option for views using the `notify` backend: called with `{ content, level, title, messages }` for each
+  notification, for example to log them. A failing hook is reported once and does not lose the notification.
+
 ## [4.13.0] - 2026-11-05
 
 ### Added

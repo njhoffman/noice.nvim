@@ -39,13 +39,11 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
       old copy that shadows this repo's module. It has nothing the repo lacks: its diff is only removals plus import
       order. It loses the numeric `hl_group` handling, preview `wrap`, and the open-in-float mapping. Nothing in the
       config references the extension by name. Fix: delete it from the config; no roll-in needed.
-- [ ] **Roll in the notify logging override.** (p2) [feature] `~/.config/nvim/lua/noice/view/backend/notify.lua` differs
-      from the repo by two lines: a call to `noice.view.backend.logfile`, and a commented-out `merge` call to drop. The
-      config dir precedes plugin dirs on the lazy.nvim rtp (`lazy/core/config.lua:307`), so it replaces the repo file and
-      will silently miss any future fix there. `logfile.lua` depends on the config's `lib.logger`, so it cannot move
-      as is. Proposed: add a generic callback option (name to be decided) to the notify view, have the config
-      pass its logger, then delete both shadow files. Decided: hook on the notify backend only, which matches
-      today's behavior.
+- [x] **Roll in the notify logging override.** (p2) [feature] The config's copy of `lua/noice/view/backend/notify.lua`
+      replaced the repo file and would silently miss future fixes. Added an `on_notify` view option on the notify backend
+      only; the config's `configs/noice/views.lua` passes its logger and both shadow files are gone. The hook gets the
+      level the notification actually uses, so route `level` overrides now log correctly. Option applies only to the
+      `notify` backend, not `snacks`.
 - [ ] **Statusline and silence counts read `#_history`.** (p2) [bug] `_history` is keyed by message id
       (`lua/noice/message/manager.lua:25`), so `#` is unreliable; a table holding ids 10-12 gives 0. Affects
       `lua/bars/components/misc_stats.lua:82`, `lua/configs/feline/provider-misc-stats.lua:83` and
