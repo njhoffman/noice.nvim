@@ -74,10 +74,16 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
       to keep real repeats, with `tests/ui/msg_spec.lua`.
 - [ ] **Decide what `history = false` messages do.** (p3) [bug] `:echo` arrives with `history = false` but still lands in
       noice's history, so `:Noice` lists messages `:messages` does not. Filtering them changes what `:Noice` shows, so it is
-      a choice and not a plain fix. Upstream #1197 (`:verbose set` losing "Last set from") is still unchecked: the capture
-      ran with `--clean`, where no option has a "Last set from" line.
-- [ ] **Check confirm events on a real UI.** (p3) [test] A headless `confirm()` sent no `msg_show` at all on 0.13-dev, so
-      `M.on_confirm` still skips without using `id`. Its repeat behaviour (#1226) is unverified.
+      a choice and not a plain fix.
+- [x] **Check confirm events on a real UI.** (p3) [test] Without a UI, `confirm()` returns at once, which is why a headless
+      capture saw nothing. With a terminal UI in a pty (`tests/e2e/ui_spec.lua`), confirm dialogs show their choices, stay
+      open through `redraw!`, and the same question shows again (#1226). `M.on_confirm` needs no `id`, since `M._on_hide`
+      clears the repeat check.
+- [x] **Check `:verbose set` output (#1197).** (p3) [bug] Not reproduced on 0.13-dev: "Last set from" is shown, and
+      `tests/e2e/ui_spec.lua` keeps it that way.
+- [ ] **`get_cmdline_position` stays set after the cmdline closes.** (p3) [bug] `Cmdline.position` and `g:ui_cmdline_pos`
+      keep their last value once the cmdline is gone, seen in the pty run. Upstream behaves the same, and a plugin reading
+      it while no cmdline is open would get a stale position. Clearing it on hide may break plugins relying on it.
 - [ ] **Decide the position on ui2.** (p3) [feature] Upstream #1201: with `vim._core.ui2` enabled the native cmdline shows
       alongside noice's. The repo has no ui2 handling and your config does not enable it, so nothing is broken for you
       today. Minimum: a `:checkhealth` warning. Longer term: decide whether noice should coexist with it at all.
@@ -135,9 +141,9 @@ reviewed by reading the diff and has not been run.
       true and `Router.update` returned at once. `tests/minit.lua` now stays alive until mini.test quits, and no longer
       sets noice up, so specs control their own setup. Separately, `lazy.minit` updates plugins on each run unless
       `LAZY_OFFLINE` is set.
-- [ ] **Add tests for the rest of the untested core.** (p2) [test] `router` and the popup, split, mini and virtualtext views
-      now have specs (`tests/message/router_spec.lua`, `tests/view/nui_spec.lua`). Still none: the rest of `ui/cmdline`,
-      LSP progress, the popupmenu, `view/scrollbar`, the snacks and `notify_send` backends.
+- [ ] **Add tests for the rest of the untested core.** (p2) [test] `ui/cmdline` now has `tests/ui/cmdline_spec.lua`, and
+      `tests/e2e/ui_spec.lua` drives real keys through a terminal UI in a pty, including hover with two language servers.
+      Still none: LSP progress, the popupmenu, `view/scrollbar`, the snacks and `notify_send` backends.
 - [ ] **Decide whether the hover and signature specs stay in subprocesses.** (p3) [test] Hover opened its window in
       process in a one-off check, so the drivers are no longer forced. They still isolate noice's state, so moving them is
       optional.

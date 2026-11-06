@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [4.16.4] - 2026-11-06
+
+### Added
+
+- End-to-end specs that drive real keys through a terminal UI in a pty, including hover with two language servers.
+
 ## [4.16.3] - 2026-11-06
 
 ### Fixed
