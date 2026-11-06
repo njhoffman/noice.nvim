@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [4.16.6] - 2026-11-06
+
+### Fixed
+
+- An error while routing, such as a route `cond` that throws, no longer stops all later messages from showing. The error
+  is reported, and the messages involved stay in the history without being shown.
+
 ## [4.16.5] - 2026-11-06
 
 ### Fixed

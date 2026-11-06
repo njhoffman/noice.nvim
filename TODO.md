@@ -32,10 +32,9 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
 - [x] **`checkhealth.info` calls an undefined global.** (p3) [bug] `lua/noice/health.lua:24` calls `info`, but the
       locals at the top of the file define only `start`, `ok`, `warn` and `error`. Latent: nothing calls `log.info` on
       that path today. Fix: add `local info = vim.health.info`. This is one of the 8 selene errors.
-- [ ] **An error during `Router.update` stops routing for good.** (p3) [bug] `M._updating` is set before the work and
-      reset only at the end of `lua/noice/message/router.lua`'s `M.update`, with no protection between. An error thrown
-      there leaves it true, and every later update returns early. From reading the code, not reproduced.
-
+- [x] **An error during `Router.update` stops routing for good.** (p2) [bug] `M._updating` was reset only at the end of
+      `M.update`, so a throwing route `cond` left it true and no later message showed. Reproduced through a real UI. The
+      error is still reported, and the messages involved stay in the history without being routed again.
 - [x] **A progress message stays when its server stops.** (p3) [bug] `M._update` in `lua/noice/lsp/progress.lua` closed the
       message and then added it again, so it stayed in the history with a frozen spinner. Found by
       `tests/e2e/ui_spec.lua`.

@@ -234,6 +234,100 @@ describe("routing", function()
     assert.equal(0, calls)
   end)
 
+  describe("when routing fails", function()
+    local function throwing_route()
+      route({
+        cond = function()
+          error("filter failed")
+        end,
+      }, fake_view())
+    end
+
+    it("reports the error", function()
+      throwing_route()
+      add("hello")
+      local ok, err = pcall(Router.update)
+      assert.is_false(ok)
+      assert.truthy(tostring(err):find("filter failed", 1, true))
+    end)
+
+    it("routes the next message", function()
+      local calls = 0
+      local view = fake_view()
+      route({
+        cond = function()
+          calls = calls + 1
+          if calls == 1 then
+            error("filter failed")
+          end
+          return false
+        end,
+      }, fake_view())
+      route({ event = "msg_show" }, view)
+      add("bad")
+      pcall(Router.update)
+      assert.is_false(Router._updating)
+      local good = add("good")
+      Router.update()
+      assert.same({ good }, view.pushed)
+    end)
+
+    it("does not retry the failed message", function()
+      local calls = 0
+      route({
+        cond = function()
+          calls = calls + 1
+          error("filter failed")
+        end,
+      }, fake_view())
+      local m = add("hello")
+      pcall(Router.update)
+      assert.equal(1, calls)
+      assert.is_false(Manager.has(m))
+      assert.is_true(Manager.has(m, { history = true }))
+      Router.update()
+      assert.equal(1, calls)
+    end)
+
+    it("recovers when a view throws while displaying", function()
+      local bad, good = fake_view(), fake_view()
+      function bad.display()
+        error("display failed")
+      end
+      route({ event = "msg_show", find = "bad" }, bad)
+      route({ event = "msg_show" }, good)
+      add("bad")
+      local ok = pcall(Router.update)
+      assert.is_false(ok)
+      assert.is_false(Router._updating)
+      add("good")
+      Router.update()
+      assert.equal(1, #good.pushed)
+    end)
+
+    it("lets the timer sleep afterwards", function()
+      throwing_route()
+      local update = Router.update
+      local updates = 0
+      Router.update = function()
+        updates = updates + 1
+        update()
+      end
+      Router.enable()
+      add("hello")
+      assert.is_true(vim.wait(1000, function()
+        return Router._tick == Manager.tick()
+      end, 5))
+      vim.wait(50)
+      updates = 0
+      vim.wait(IDLE_MS)
+      local idle_updates = updates
+      Router.disable()
+      Router.update = update
+      assert.equal(0, idle_updates)
+    end)
+  end)
+
   describe("with a real view", function()
     local view
 

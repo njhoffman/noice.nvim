@@ -69,6 +69,22 @@ end, {
   end,
 })
 
+-- Adds a route ahead of the others whose filter throws for messages that are exactly `text`, or for all
+-- messages without one. Exactly, since the reported error is itself a message, and mentions `text`.
+function E2E.add_throwing_route(text)
+  require("noice.message.router").add({
+    view = "mini",
+    filter = {
+      cond = function(message)
+        if not text or message:content() == text then
+          error("filter failed on " .. text)
+        end
+        return false
+      end,
+    },
+  }, 1)
+end
+
 -- What each server can send to Neovim, so specs can send real notifications
 E2E.servers = {}
 

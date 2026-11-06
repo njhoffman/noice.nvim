@@ -179,7 +179,20 @@ function M.update()
   local next_tick = Manager.tick()
 
   M._updating = true
+  local ok, err = pcall(M._route, next_tick)
+  M._updating = false
 
+  if not ok then
+    -- Stop routing these messages, which stay in the history. They would fail the same way on every
+    -- update, until the errors disabled Noice.
+    Manager.clear()
+    M._tick = Manager.tick()
+    error(err, 0)
+  end
+end
+
+---@param next_tick integer
+function M._route(next_tick)
   Util.stats.track("router.update")
 
   ---@type table<NoiceView,boolean>
@@ -244,8 +257,6 @@ function M.update()
     Util.stats.track("router.update.updated")
     Util.redraw()
   end
-
-  M._updating = false
 end
 
 function M.echo_pending()
