@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+## [4.13.0] - 2026-11-05
+
+### Added
+
+- `tail` view option: auto-scroll a view to the bottom when it opens and when messages are added.
+- `VERSION` file. Releases are tagged `vX.Y.Z` from this version on; 4.11.0 and 4.12.0 were never tagged.
+
+### Fixed
+
+- A hover starting with an empty code fence no longer fails with `Index out of bounds`. Empty and blank-only code blocks
+  are dropped ([folke#1232](https://github.com/folke/noice.nvim/issues/1232)).
+- Explicit encoding for `vim.str_utfindex`, which removes a deprecation warning.
+
 ## [4.12.0](https://github.com/njhoffman/noice.nvim/compare/v4.11.0...v4.12.0) (2026-03-28)
 
 
