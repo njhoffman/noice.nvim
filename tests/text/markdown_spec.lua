@@ -209,5 +209,43 @@ local b
       { line = "&" },
     },
   },
+  {
+    input = "```lua\n```\nhello",
+    output = {
+      { line = "hello" },
+    },
+  },
+  {
+    input = "```lua\n   \n```\nhello",
+    output = {
+      { line = "hello" },
+    },
+  },
+  {
+    input = "```lua\n```",
+    output = {},
+  },
+  {
+    input = "hello\n```lua\n```\nworld",
+    output = {
+      { line = "hello" },
+      { line = "" },
+      { line = "world" },
+    },
+  },
+  {
+    input = "hello\n```lua\n```",
+    output = {
+      { line = "hello" },
+    },
+  },
+  {
+    input = "hello\n```lua\n```\n---\nworld",
+    output = {
+      { line = "hello" },
+      { line = "---" },
+      { line = "world" },
+    },
+  },
 }
 M.test()

@@ -81,6 +81,9 @@ function M.parse(text, opts)
     end
   end
 
+  -- an empty code block was dropped, and the next text still needs separating from what came before
+  local pending_break = false
+
   while l <= #lines do
     local line = lines[l]
     if M.is_empty(line) then
@@ -100,21 +103,29 @@ function M.parse(text, opts)
       end
 
       local prev = ret[#ret]
-      if prev and not M.is_rule(prev.line) then
-        table.insert(ret, { line = "" })
+      if vim.trim(table.concat(block.code, "")) == "" then
+        -- Rendering an empty block leaves blank lines that get trimmed, while the markdown highlight
+        -- range still counts them, which makes treesitter fail with "Index out of bounds".
+        pending_break = prev ~= nil
+      else
+        if prev and not M.is_rule(prev.line) then
+          table.insert(ret, { line = "" })
+        end
+        table.insert(ret, block)
+        pending_break = false
       end
-
-      table.insert(ret, block)
       l = l + 1
       eat_nl()
     elseif M.is_rule(line) then
       table.insert(ret, { line = "---" })
+      pending_break = false
       eat_nl()
     else
       local prev = ret[#ret]
-      if prev and prev.code then
+      if prev and (prev.code or pending_break) then
         table.insert(ret, { line = "" })
       end
+      pending_break = false
       table.insert(ret, { line = line })
     end
     l = l + 1
