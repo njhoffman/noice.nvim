@@ -112,10 +112,29 @@ function M.opts(state)
     opts.relative = { type = "cursor" }
     local border = vim.tbl_get(opts, "border", "style")
     local offset = (border == nil or border == "none") and 0 or 1
-    opts.position = {
-      row = 1 + offset,
-      col = -padding.left,
-    }
+
+    -- All in screen rows. The window's own height says nothing about where it sits on the screen.
+    local cursor_row = vim.fn.screenpos(0, vim.fn.line("."), vim.fn.col(".")).row
+    local above = cursor_row - 1
+    local below = vim.go.lines - vim.go.cmdheight - cursor_row
+    local height = opts.size and type(opts.size.height) == "number" and opts.size.height or #state.items
+    if opts.size and type(opts.size.max_height) == "number" then
+      height = math.min(height, opts.size.max_height)
+    end
+
+    local flip = height + offset * 2 > below and above > below
+    if flip then
+      opts.anchor = "SW"
+      opts.position = { row = offset, col = -padding.left }
+    else
+      opts.position = { row = 1 + offset, col = -padding.left }
+    end
+
+    -- Without a cap on the height, Neovim moves a window that does not fit back over the cursor
+    if opts.size then
+      local room = math.max(1, (flip and above or below) - offset * 2)
+      opts.size.max_height = math.min(opts.size.max_height or room, room)
+    end
   end
 
   -- manage left/right padding on the line

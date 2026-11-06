@@ -31,6 +31,10 @@ if backend then
   end
 end
 
+if vim.env.NOICE_E2E_VIEWS then
+  opts.views = vim.tbl_deep_extend("force", opts.views or {}, vim.json.decode(vim.env.NOICE_E2E_VIEWS))
+end
+
 require("noice").setup(opts)
 
 local E2E = {}
@@ -77,6 +81,11 @@ function E2E.menu()
     height = vim.api.nvim_win_get_height(menu.winid),
     width = vim.api.nvim_win_get_width(menu.winid),
     position = vim.api.nvim_win_get_position(menu.winid),
+    -- The rows it covers, border included
+    top = vim.api.nvim_win_get_position(menu.border.winid or menu.winid)[1],
+    bottom = vim.api.nvim_win_get_position(menu.border.winid or menu.winid)[1] + vim.api.nvim_win_get_height(
+      menu.border.winid or menu.winid
+    ) - 1,
   }
 end
 

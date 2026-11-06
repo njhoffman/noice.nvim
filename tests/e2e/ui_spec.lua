@@ -371,6 +371,88 @@ describe("e2e", function()
         assert.truthy(line:find("Function", 1, true), line)
       end)
 
+      describe("near the edges of the screen", function()
+        local LINES = 200
+
+        -- Puts the cursor on a screen row, by scrolling a long buffer
+        local function fill(screen_line)
+          local lines = {}
+          for i = 1, LINES do
+            lines[i] = ""
+          end
+          lua("vim.api.nvim_buf_set_lines(0, 0, -1, false, ...) == nil", lines)
+          lua("vim.api.nvim_win_set_cursor(0, { 100, 0 }) == nil")
+          lua("(function(row) vim.fn.winrestview({ topline = 100 - row + 1 }) end)(...) == nil", screen_line)
+        end
+
+        local function complete(count)
+          local words = {}
+          for i = 1, count do
+            words[i] = ("{ word = 'word%d' }"):format(i)
+          end
+          input("i<cmd>lua vim.fn.complete(1, { " .. table.concat(words, ", ") .. " })<cr>")
+          local m = wait_for(count .. " items", function()
+            local current = current_menu()
+            return current and #current.lines == count and current
+          end)
+          local cursor = lua("vim.fn.screenrow()") - 1
+          return m, cursor
+        end
+
+        local function assert_clear_of_cursor(m, cursor)
+          assert.is_true(m.bottom < cursor or m.top > cursor, vim.inspect({ m.top, m.bottom, cursor }))
+        end
+
+        it("opens below the cursor when there is room", function()
+          fill(5)
+          local m, cursor = complete(5)
+          assert.is_true(m.top > cursor, vim.inspect({ m.top, cursor }))
+        end)
+
+        it("opens above the cursor at the bottom of the screen", function()
+          fill(27)
+          local m, cursor = complete(10)
+          assert.equal(cursor - 1, m.bottom)
+          assert.equal(10, m.height)
+        end)
+
+        it("stays below when it just fits", function()
+          fill(19)
+          local m, cursor = complete(10)
+          assert.is_true(m.top > cursor, vim.inspect({ m.top, cursor }))
+          assert.equal(10, m.height)
+        end)
+
+        it("shrinks to the larger side when it fits on neither", function()
+          fill(15)
+          local m, cursor = complete(25)
+          assert_clear_of_cursor(m, cursor)
+          assert.is_true(m.height < 20, tostring(m.height))
+          selected(1)
+        end)
+
+        it("takes the side with more room when it fits on neither", function()
+          fill(12)
+          local m, cursor = complete(25)
+          assert.is_true(m.top > cursor, vim.inspect({ m.top, cursor }))
+          assert_clear_of_cursor(m, cursor)
+        end)
+
+        it("goes by the screen, not by a small window at the top of it", function()
+          lua("(function() vim.cmd('topleft 8split') end)() == nil")
+          fill(6)
+          local m, cursor = complete(5)
+          assert.is_true(m.top > cursor, vim.inspect({ m.top, cursor }))
+        end)
+
+        it("flips in a small window at the bottom of the screen", function()
+          lua("(function() vim.cmd('botright 8split') end)() == nil")
+          fill(5)
+          local m, cursor = complete(5)
+          assert.is_true(m.bottom < cursor, vim.inspect({ m.bottom, cursor }))
+        end)
+      end)
+
       it("keeps a multi-line item on one line", function()
         input("i<cmd>lua vim.fn.complete(1, { { word = 'one', menu = 'line1\\nline2' }, { word = 'two' } })<cr>")
         local m = wait_for("two items", function()
@@ -425,6 +507,39 @@ describe("e2e", function()
       wait_for("the command to run", function()
         return lua("vim.g.still_works") == 1
       end)
+    end)
+  end)
+
+  describe("popupmenu with a border", function()
+    it("stays clear of the cursor on both sides", function()
+      nvim.stop()
+      nvim = Driver.start({ NOICE_E2E_VIEWS = '{"popupmenu":{"border":{"style":"rounded"}}}' })
+      lua, input, wait_for = nvim.lua, nvim.input, nvim.wait_for
+
+      local lines = {}
+      for i = 1, 200 do
+        lines[i] = ""
+      end
+      lua("vim.api.nvim_buf_set_lines(0, 0, -1, false, ...) == nil", lines)
+      -- On row 25 the items just fit below, but not with their border
+      for _, row in ipairs({ 5, 25, 27 }) do
+        lua("vim.api.nvim_win_set_cursor(0, { 100, 0 }) == nil")
+        lua("(function(r) vim.fn.winrestview({ topline = 100 - r + 1 }) end)(...) == nil", row)
+        input("i<cmd>lua vim.fn.complete(1, { { word = 'a' }, { word = 'b' }, { word = 'c' }, { word = 'd' } })<cr>")
+        local m = wait_for("the menu", function()
+          local current = lua("E2E.menu()")
+          return current ~= vim.NIL and current
+        end)
+        local cursor = lua("vim.fn.screenrow()") - 1
+        -- Right next to the cursor, and all of it on the screen
+        local info = vim.inspect({ row, m.top, m.bottom, cursor })
+        assert.is_true(m.bottom == cursor - 1 or m.top == cursor + 1, info)
+        assert.is_true(m.top >= 0 and m.bottom <= 29, info)
+        -- Not shrunk to fit a side, when the other side has room for all of it
+        assert.equal(4, m.height)
+        input("<esc>")
+        nvim.mode("n")
+      end
     end)
   end)
 
