@@ -44,12 +44,10 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
       only; the config's `configs/noice/views.lua` passes its logger and both shadow files are gone. The hook gets the
       level the notification actually uses, so route `level` overrides now log correctly. Option applies only to the
       `notify` backend, not `snacks`.
-- [ ] **Statusline and silence counts read `#_history`.** (p2) [bug] `_history` is keyed by message id
-      (`lua/noice/message/manager.lua:25`), so `#` is unreliable; a table holding ids 10-12 gives 0. Affects
-      `lua/bars/components/misc_stats.lua:82`, `lua/configs/feline/provider-misc-stats.lua:83` and
-      `lua/core/commands/silence.lua:59,175` in the config. After `:NoiceFlush` the count stays near 0 for good, because ids
-      keep rising from where they were. Fix: add a public count/clear API here (see #1186 in section 4) and use it there;
-      `silence.lua` also replaces `_history` directly, which does no tick update.
+- [x] **Statusline and silence counts read `#_history`.** (p2) [bug] `_history` is keyed by message id
+      (`lua/noice/message/manager.lua:25`), so `#` was unreliable; a table holding ids 10-12 gives 0. After `:NoiceFlush`
+      the count stayed near 0 for good. Added `api.history.count` and `api.history.clear`; the config's bars, feline,
+      lualine, windline and `silence.lua` now use them, and `tests/unit/silence_spec.lua` guards against `_history`.
 - [x] **`:Silence` routes never match.** (p2) [bug] `lua/core/commands/silence.lua` in the config filtered on
       `event = "msg_show.*"`, but the `event` filter is an exact comparison (`lua/noice/message/filter.lua:51-56`).
       Fixing the filter alone would not have worked: `noice.setup()` at runtime resets all options to defaults and appends
@@ -111,8 +109,8 @@ reviewed by reading the diff and has not been run.
       re-checked on `ColorScheme`, so a UI attaching later can be missed.
 - [ ] **Update the March tables.** (p3) [docs] #1194 is now closed upstream, unmerged, though the patch still applies.
       #1066 and #1041 still conflict. #1228 and #1213 conflict only because this fork already made those changes
-      (b40e59c, 664667b), so neither needs action. #1186 would replace the `_history` hack in section 2
-      once its missing `next_tick()` is fixed.
+      (b40e59c, 664667b), so neither needs action. #1186 is no longer needed: `api.history.clear` covers it and also
+      keeps messages not yet routed, which #1186 drops when called with no filter.
 
 ## 5. Repo maintenance
 

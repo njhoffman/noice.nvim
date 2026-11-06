@@ -220,4 +220,94 @@ describe("manager", function()
       assert.equal(2, #result)
     end)
   end)
+
+  describe("history_count", function()
+    it("counts messages by id, however the ids are spaced", function()
+      Manager._history = { [10] = msg("msg_show", "echo", "a"), [11] = msg("msg_show", "echo", "b") }
+      assert.equal(2, Manager.history_count())
+    end)
+
+    it("is zero when empty", function()
+      assert.equal(0, Manager.history_count())
+    end)
+
+    it("counts only matching messages with a filter", function()
+      Manager._history = { msg("msg_show", "echo", "a"), msg("notify", "info", "b") }
+      assert.equal(1, Manager.history_count({ event = "notify" }))
+    end)
+
+    it("includes messages already routed out of the live list", function()
+      local m = msg("msg_show", "echo", "a")
+      Manager.add(m)
+      Manager.clear()
+      assert.equal(1, Manager.history_count())
+    end)
+  end)
+
+  describe("clear_history", function()
+    local function routed(event, kind, content)
+      local m = msg(event, kind, content)
+      Manager.add(m)
+      Manager.clear({ message = m })
+      return m
+    end
+
+    it("removes routed messages and returns how many", function()
+      local a, b = routed("msg_show", "echo", "a"), routed("notify", "info", "b")
+      assert.equal(2, Manager.clear_history())
+      assert.is_false(Manager.has(a, { history = true }))
+      assert.is_false(Manager.has(b, { history = true }))
+      assert.equal(0, Manager.history_count())
+    end)
+
+    it("advances the tick so views notice", function()
+      routed("msg_show", "echo", "a")
+      local tick = Manager.tick()
+      Manager.clear_history()
+      assert.is_true(Manager.tick() > tick)
+    end)
+
+    it("does not advance the tick when nothing was removed", function()
+      local tick = Manager.tick()
+      assert.equal(0, Manager.clear_history())
+      assert.equal(tick, Manager.tick())
+    end)
+
+    it("keeps messages that have not been routed yet", function()
+      local pending = msg("msg_show", "echo", "pending")
+      Manager.add(pending)
+      assert.equal(0, Manager.clear_history())
+      assert.is_true(Manager.has(pending))
+      assert.is_true(Manager.has(pending, { history = true }))
+    end)
+
+    it("removes only matching messages with a filter", function()
+      local a, b = routed("msg_show", "echo", "a"), routed("notify", "info", "b")
+      assert.equal(1, Manager.clear_history({ event = "notify" }))
+      assert.is_true(Manager.has(a, { history = true }))
+      assert.is_false(Manager.has(b, { history = true }))
+    end)
+
+    it("runs on_remove", function()
+      local m = routed("msg_show", "echo", "a")
+      local called = false
+      m.on_remove = function()
+        called = true
+      end
+      Manager.clear_history()
+      assert.is_true(called)
+    end)
+  end)
+
+  describe("api.history", function()
+    it("exposes count and clear", function()
+      local Api = require("noice.api")
+      local m = msg("msg_show", "echo", "a")
+      Manager.add(m)
+      Manager.clear({ message = m })
+      assert.equal(1, Api.history.count())
+      assert.equal(1, Api.history.clear())
+      assert.equal(0, Api.history.count())
+    end)
+  end)
 end)

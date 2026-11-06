@@ -637,6 +637,14 @@ require("lualine").setup({
 
 </details>
 
+## Message History
+
+`require("noice").api.history` gives access to the message history. Both functions take an optional [filter](#-filters).
+
+- `count(filter?)` returns the number of messages in the history.
+- `clear(filter?)` removes messages and returns how many it removed. Views showing them close. Messages that have not been
+  routed yet are kept.
+
 ## 🔭 Pickers
 
 For convenience, you can do `:Noice pick`, which will open a picker with all the messages in the history,

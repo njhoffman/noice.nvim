@@ -725,6 +725,16 @@ Example of configuring lualine.nvim ~
 <
 
 
+MESSAGE HISTORY
+
+`require("noice").api.history` gives access to the message history. Both
+functions take an optional filter.
+
+- `count(filter?)` returns the number of messages in the history.
+- `clear(filter?)` removes messages and returns how many it removed. Views
+  showing them close. Messages that have not been routed yet are kept.
+
+
 PICKERS                       *noice.nvim-noice-(nice,-noise,-notice)-pickers*
 
 For convenience, you can do `:Noice pick`, which will open a picker with all

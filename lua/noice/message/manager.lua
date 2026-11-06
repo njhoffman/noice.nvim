@@ -55,6 +55,27 @@ function M.clear(filter)
   end, filter)
 end
 
+---@param filter? NoiceFilter
+---@return integer
+function M.history_count(filter)
+  return #M.get(filter, { history = true })
+end
+
+-- Removes messages from the history, which also closes views showing them, since views drop
+-- messages that left the history. Messages not routed yet are kept, or they would never be shown.
+---@param filter? NoiceFilter
+---@return integer removed
+function M.clear_history(filter)
+  local removed = 0
+  M.with(function(message)
+    if not M._messages[message.id] then
+      M.remove(message)
+      removed = removed + 1
+    end
+  end, filter, { history = true })
+  return removed
+end
+
 ---@param max number
 function M.prune(max)
   local keep = M.get(nil, { count = max })

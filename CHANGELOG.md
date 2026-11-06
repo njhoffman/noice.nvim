@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [4.15.0] - 2026-11-05
+
+### Added
+
+- `api.history.count(filter?)` and `api.history.clear(filter?)`, and the `Manager.history_count` and
+  `Manager.clear_history` behind them. Clearing also closes views showing the removed messages and keeps messages not
+  yet routed.
+
 ## [4.14.0] - 2026-11-05
 
 ### Added
