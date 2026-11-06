@@ -6,6 +6,7 @@ local Treesitter = require("noice.text.treesitter")
 local Util = require("noice.util")
 
 local start = vim.health.start
+local info = vim.health.info
 local ok = vim.health.ok
 local warn = vim.health.warn
 local error = vim.health.error
