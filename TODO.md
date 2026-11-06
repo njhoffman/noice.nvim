@@ -130,16 +130,17 @@ reviewed by reading the diff and has not been run.
       the same time.
 - [ ] **Make selene pass.** (p3) [chore] 7 errors, 24 warnings. All 7 errors are `bit` missing from `vim.yml` (false positive,
       add it to globals). Then clear the unused-variable warnings.
-- [ ] **Find out why views do not open under the test runner.** (p3) [test] Under `scripts/test`, noice is already disabled
-      by the time specs run, and the hover window never opened even after `enable()` and `Router.update()`. Likely cause: `v:exiting` is `0` under the
-      runner (`vim.NIL` under a plain `nvim -l`), so `Util.is_exiting()` is true and `Router.update` returns at once.
-      Why it is `0`, and whether a stub is enough for hover, is not checked. `tests/message/router_spec.lua` stubs it, and also `Util.redraw`: in
-      the full suite, `nvim__redraw({ flush = true })` inside `vim.wait` sometimes stalled a plain `vim.defer_fn` loop
-      with no noice code (1 tick instead of 15, in one of two runs). Not seen outside `vim.wait`, not explained. So `tests/lsp/hover_spec.lua` runs `tests/lsp/hover_driver.lua` in a clean subprocess. Fixing this would
-      make view-level specs simple. Separately, `lazy.minit` updates plugins on each run unless `LAZY_OFFLINE` is set.
-- [ ] **Add tests for the untested core.** (p2) [test] Specs cover filter, manager, markdown, hover, signature, confirm
-      dialogs, the notify view and `tail`. `ui/msg`, the rest of `ui/cmdline`, `router` and LSP progress have none. Start
-      with `msg_show` event handling.
+- [x] **Find out why views do not open under the test runner.** (p3) [test] mini.test only schedules its cases, so the
+      `nvim -l` script ended and every spec ran with Neovim already exiting: `v:exiting` was `0`, `Util.is_exiting()` was
+      true and `Router.update` returned at once. `tests/minit.lua` now stays alive until mini.test quits, and no longer
+      sets noice up, so specs control their own setup. Separately, `lazy.minit` updates plugins on each run unless
+      `LAZY_OFFLINE` is set.
+- [ ] **Add tests for the rest of the untested core.** (p2) [test] `router` and the popup, split, mini and virtualtext views
+      now have specs (`tests/message/router_spec.lua`, `tests/view/nui_spec.lua`). Still none: the rest of `ui/cmdline`,
+      LSP progress, the popupmenu, `view/scrollbar`, the snacks and `notify_send` backends.
+- [ ] **Decide whether the hover and signature specs stay in subprocesses.** (p3) [test] Hover opened its window in
+      process in a one-off check, so the drivers are no longer forced. They still isolate noice's state, so moving them is
+      optional.
 - [ ] **Settle the fork's identity in repo metadata.** (p3) [chore] `lazy.lua` still names `folke/noice.nvim`, and
       the CI and update workflows call `folke/github`. On GitHub the repo is not marked as a fork. Decide what should
       point at this repo; check how `lazy.lua` behaves under your `njhoffman/noice.nvim` spec before changing it.

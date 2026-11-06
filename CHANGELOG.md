@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [4.16.3] - 2026-11-06
+
+### Fixed
+
+- Specs no longer run while Neovim is exiting, so views and the router work under `scripts/test`.
+
 ## [4.16.2] - 2026-11-06
 
 ### Fixed
