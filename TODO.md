@@ -22,14 +22,14 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
       arrives, so `:echo "test"` run twice shows once. Confirm dialogs repeating (#1226) look like the same family; see
       #1230 in section 4. Fix needs a way to tell a redraw replay from a real repeat. Worth checking whether the
       newer `msg_show` `id` argument (section 3) provides that.
-- [ ] **Router wakes about 30 times a second while idle.** (p2) [perf] Upstream #1225, closed as stale.
+- [x] **Router wakes about 30 times a second while idle.** (p2) [perf] Upstream #1225, closed as stale.
       `lua/noice/message/router.lua:32` creates the interval with no `enabled` predicate, though `Util.interval` supports
       one (`lua/noice/util/init.lua:116`). Measurable idle power cost. Fix: stop the timer when nothing is pending and
       restart it from `Manager.add`; needs care so a message added while stopped is not missed.
-- [ ] **`Manager.add` may still hit the fast-event error.** (p3) [bug] Upstream #1196 (E5560, `localtime` in a fast event).
+- [x] **`Manager.add` may still hit the fast-event error.** (p3) [bug] Upstream #1196 (E5560, `localtime` in a fast event).
       `Message:init` already uses `os.time()`, but `lua/noice/message/manager.lua:24` still calls `vim.fn.localtime()`.
       Not reproduced; whether it can run in a fast context needs checking. Fix: use `os.time()` there too.
-- [ ] **`checkhealth.info` calls an undefined global.** (p3) [bug] `lua/noice/health.lua:24` calls `info`, but the
+- [x] **`checkhealth.info` calls an undefined global.** (p3) [bug] `lua/noice/health.lua:24` calls `info`, but the
       locals at the top of the file define only `start`, `ok`, `warn` and `error`. Latent: nothing calls `log.info` on
       that path today. Fix: add `local info = vim.health.info`. This is one of the 8 selene errors.
 
@@ -61,6 +61,10 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
 - [ ] **Move stock noice defaults out of `configs/noice/`.** (p3) [chore] Check which entries in the config's `lsp.lua`
       and `views.lua` just repeat defaults, now that the plugin is under your control. Also note `lsp.override` enables
       `vim.lsp.util.stylize_markdown`, deprecated in Neovim's `deprecated.txt`; see section 3.
+
+- [ ] **An error during `Router.update` stops routing for good.** (p3) [bug] `M._updating` is set before the work and
+      reset only at the end of `lua/noice/message/router.lua`'s `M.update`, with no protection between. An error thrown
+      there leaves it true, and every later update returns early. From reading the code, not reproduced.
 
 ## 3. Neovim 0.11-0.13 compatibility
 
@@ -121,14 +125,17 @@ reviewed by reading the diff and has not been run.
 - [ ] **Convert the older changelog sections.** (p3) [chore] New sections use Keep a Changelog, from 4.13.0 on. Everything
       from 4.12.0 down is still in release-please format, and v4.11.0 and v4.12.0 stay untagged by decision (no backfill).
       Decide whether the old sections are worth converting; `.github/workflows` should also not regenerate this file.
-- [ ] **Document the fork's `tail` option in the README.** (p2) [docs] Added to `doc/noice.nvim.txt` only (line 530).
+- [x] **Document the fork's `tail` option in the README.** (p2) [docs] Added to `doc/noice.nvim.txt` only (line 530).
       Upstream generates that file from the README, so a regenerate would remove it. Check other fork-only options at
       the same time.
-- [ ] **Make selene pass.** (p3) [chore] 8 errors, 23 warnings. 7 errors are `bit` missing from `vim.yml` (false positive,
-      add it to globals); the 8th is the `health.lua` bug in section 1. Then clear the unused-variable warnings.
+- [ ] **Make selene pass.** (p3) [chore] 7 errors, 24 warnings. All 7 errors are `bit` missing from `vim.yml` (false positive,
+      add it to globals). Then clear the unused-variable warnings.
 - [ ] **Find out why views do not open under the test runner.** (p3) [test] Under `scripts/test`, noice is already disabled
-      by the time specs run, and the hover window never opened even after `enable()` and `Router.update()`. Cause not
-      found, so `tests/lsp/hover_spec.lua` runs `tests/lsp/hover_driver.lua` in a clean subprocess. Fixing this would
+      by the time specs run, and the hover window never opened even after `enable()` and `Router.update()`. Likely cause: `v:exiting` is `0` under the
+      runner (`vim.NIL` under a plain `nvim -l`), so `Util.is_exiting()` is true and `Router.update` returns at once.
+      Why it is `0`, and whether a stub is enough for hover, is not checked. `tests/message/router_spec.lua` stubs it, and also `Util.redraw`: in
+      the full suite, `nvim__redraw({ flush = true })` inside `vim.wait` sometimes stalled a plain `vim.defer_fn` loop
+      with no noice code (1 tick instead of 15, in one of two runs). Not seen outside `vim.wait`, not explained. So `tests/lsp/hover_spec.lua` runs `tests/lsp/hover_driver.lua` in a clean subprocess. Fixing this would
       make view-level specs simple. Separately, `lazy.minit` updates plugins on each run unless `LAZY_OFFLINE` is set.
 - [ ] **Add tests for the untested core.** (p2) [test] Specs cover filter, manager, markdown, hover, signature, confirm
       dialogs, the notify view and `tail`. `ui/msg`, the rest of `ui/cmdline`, `router` and LSP progress have none. Start

@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [4.16.2] - 2026-11-06
+
+### Fixed
+
+- The router no longer wakes about 30 times a second while idle. It sleeps until a message changes.
+- Adding a message from a fast event no longer raises E5560.
+- `checkhealth` log output at info level no longer calls an undefined function.
+
+### Added
+
+- The `tail` view option is documented in the README.
+
 ## [4.16.1] - 2026-11-05
 
 ### Fixed
