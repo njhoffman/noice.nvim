@@ -36,12 +36,64 @@ function E2E.position()
   return require("noice").api.get_cmdline_position()
 end
 
+-- The open popupmenu: its lines, and the selected line if any
+function E2E.menu()
+  local menu = require("noice.ui.popupmenu.nui").menu
+  if not (menu and menu.winid and vim.api.nvim_win_is_valid(menu.winid)) then
+    return nil
+  end
+  E2E.menu_win = menu.winid
+  return {
+    lines = vim.tbl_map(vim.trim, vim.api.nvim_buf_get_lines(menu.bufnr, 0, -1, false)),
+    selected = vim.wo[menu.winid].cursorline and vim.api.nvim_win_get_cursor(menu.winid)[1] or nil,
+    height = vim.api.nvim_win_get_height(menu.winid),
+    width = vim.api.nvim_win_get_width(menu.winid),
+    position = vim.api.nvim_win_get_position(menu.winid),
+  }
+end
+
+-- Whether the last menu seen still has a window, whatever noice itself remembers
+function E2E.menu_win_open()
+  return E2E.menu_win ~= nil and vim.api.nvim_win_is_valid(E2E.menu_win)
+end
+
+-- A command completing from a fixed list
+vim.api.nvim_create_user_command("E2eFoo", function(args)
+  vim.g.foo_arg = args.args
+end, {
+  nargs = 1,
+  complete = function(lead)
+    return vim.tbl_filter(function(word)
+      return word:find(lead, 1, true) == 1
+    end, vim.g.foo_words or { "alpha", "alpine", "beta" })
+  end,
+})
+
+-- What each server can send to Neovim, so specs can send real notifications
+E2E.servers = {}
+
+-- Sends $/progress the way a real server does
+function E2E.progress(name, token, value)
+  E2E.servers[name].notification("$/progress", { token = token, value = value })
+end
+
+function E2E.progress_messages()
+  local ret = {}
+  for _, message in
+    ipairs(require("noice.message.manager").get({ event = "lsp", kind = "progress" }, { history = true }))
+  do
+    ret[#ret + 1] = message:content()
+  end
+  return ret
+end
+
 -- Starts an in-process language server answering hover with `text`, or with nothing if text is false
 function E2E.start_lsp(name, text)
   return vim.lsp.start({
     name = name,
     cmd = function(dispatchers)
       local closing = false
+      E2E.servers[name] = dispatchers
       return {
         request = function(method, _, callback)
           if method == "initialize" then

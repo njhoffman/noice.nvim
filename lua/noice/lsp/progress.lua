@@ -66,8 +66,7 @@ function M._update()
       local client = vim.lsp.get_clients({ id = message.opts.progress.client_id })[1]
       if not client then
         M.close(id)
-      end
-      if message.opts.progress.kind == "end" then
+      elseif message.opts.progress.kind == "end" then
         Manager.add(Format.format(message, Config.options.lsp.progress.format_done))
       else
         Manager.add(Format.format(message, Config.options.lsp.progress.format))

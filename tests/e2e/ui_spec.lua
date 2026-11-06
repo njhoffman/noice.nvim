@@ -207,6 +207,264 @@ describe("e2e", function()
     end)
   end)
 
+  describe("lsp progress", function()
+    local function start(name)
+      local id = lua("E2E.start_lsp(...)", name, false)
+      wait_for("the server", function()
+        return lua("vim.lsp.get_client_by_id(...).initialized", id)
+      end)
+      return id
+    end
+
+    local function progress(name, token, value)
+      lua("E2E.progress(...) == nil", name, token, value)
+    end
+
+    it("shows the title, the message and the server's name", function()
+      start("server")
+      progress("server", "t", { kind = "begin", title = "Indexing", message = "file.lua" })
+      local content = float("Indexing")
+      assert.truthy(content:find("file.lua", 1, true), content)
+      assert.truthy(content:find("server", 1, true), content)
+    end)
+
+    it("updates as reports arrive", function()
+      start("server")
+      progress("server", "t", { kind = "begin", title = "Indexing", message = "one" })
+      float("one")
+      progress("server", "t", { kind = "report", message = "two", percentage = 50 })
+      local content = float("two")
+      assert.is_nil(content:find("one", 1, true), content)
+      assert.equal(1, #lua("E2E.progress_messages()"))
+    end)
+
+    it("removes the message after the end", function()
+      start("server")
+      progress("server", "t", { kind = "begin", title = "Indexing" })
+      float("Indexing")
+      progress("server", "t", { kind = "end" })
+      wait_for("the message to go", function()
+        return #lua("E2E.progress_messages()") == 0
+      end)
+      no_float("Indexing")
+    end)
+
+    it("keeps tokens and servers apart", function()
+      start("one")
+      start("two")
+      progress("one", "a", { kind = "begin", title = "First" })
+      progress("one", "b", { kind = "begin", title = "Second" })
+      progress("two", "a", { kind = "begin", title = "Third" })
+      local content = float("Third")
+      assert.truthy(content:find("First", 1, true), content)
+      assert.truthy(content:find("Second", 1, true), content)
+      assert.equal(3, #lua("E2E.progress_messages()"))
+    end)
+
+    it("takes a numeric token", function()
+      start("server")
+      progress("server", 7, { kind = "begin", title = "Indexing" })
+      float("Indexing")
+    end)
+
+    it("drops the message when the server stops halfway", function()
+      local id = start("server")
+      progress("server", "t", { kind = "begin", title = "Indexing" })
+      float("Indexing")
+      lua("vim.lsp.get_client_by_id(...):stop(true) == nil", id)
+      wait_for("the server to stop", function()
+        return lua("vim.lsp.get_client_by_id(...) == nil", id)
+      end)
+      vim.wait(300)
+      assert.same({}, lua("E2E.progress_messages()"))
+      no_float("Indexing")
+    end)
+  end)
+
+  describe("popupmenu", function()
+    -- A nil comes back over RPC as vim.NIL, which is truthy
+    local function current_menu()
+      local ret = lua("E2E.menu()")
+      return ret ~= vim.NIL and ret or nil
+    end
+
+    local function menu()
+      return wait_for("the menu", current_menu)
+    end
+
+    local function no_menu()
+      wait_for("the menu to close", function()
+        return current_menu() == nil and not lua("E2E.menu_win_open()")
+      end)
+    end
+
+    local function selected(line)
+      wait_for("line " .. line .. " selected", function()
+        local m = current_menu()
+        return m and m.selected == line
+      end)
+    end
+
+    describe("in the cmdline", function()
+      -- Sent apart, since Neovim shows no menu while more typed keys are pending
+      local function complete(text)
+        input(text)
+        wait_for("the cmdline", function()
+          return lua("vim.fn.getcmdline()") == text:sub(2)
+        end)
+        input("<tab>")
+      end
+
+      local function items(count)
+        return wait_for(count .. " items", function()
+          local current = current_menu()
+          return current and #current.lines == count and current
+        end)
+      end
+
+      it("lists completions and selects the first", function()
+        complete(":E2eFoo ")
+        assert.same({ "alpha", "alpine", "beta" }, items(3).lines)
+        selected(1)
+      end)
+
+      it("narrows to what was typed", function()
+        complete(":E2eFoo al")
+        assert.same({ "alpha", "alpine" }, items(2).lines)
+      end)
+
+      it("moves the selection and fills the cmdline", function()
+        complete(":E2eFoo ")
+        menu()
+        input("<tab>")
+        wait_for("the second item", function()
+          return lua("vim.fn.getcmdline()") == "E2eFoo alpine"
+        end)
+        selected(2)
+      end)
+
+      it("closes on escape", function()
+        complete(":E2eFoo ")
+        menu()
+        input("<esc>")
+        no_menu()
+        mode("n")
+      end)
+
+      it("runs the command with the choice", function()
+        complete(":E2eFoo ")
+        menu()
+        input("<tab>")
+        selected(2)
+        input("<tab>")
+        selected(3)
+        input("<cr>")
+        wait_for("the command to run", function()
+          return lua("vim.g.foo_arg") == "beta"
+        end)
+        no_menu()
+      end)
+
+      it("sizes itself to its items", function()
+        lua("(function() vim.g.foo_words = { 'short', 'a_rather_longer_word' } end)() == nil")
+        complete(":E2eFoo ")
+        local m = items(2)
+        assert.equal(2, m.height)
+        assert.is_true(m.width >= #"a_rather_longer_word")
+      end)
+
+      it("opens under the cmdline, at the start of the completed word", function()
+        complete(":E2eFoo ")
+        local m = items(3)
+        local cmdline = wait_for("a position", function()
+          local position = lua("E2E.position()")
+          return position ~= vim.NIL and position
+        end)
+        assert.is_true(m.position[1] >= cmdline.screenpos.row - 1, vim.inspect({ m.position, cmdline.screenpos }))
+        -- The window starts one column early, since its text has a column of padding on the left
+        assert.equal(
+          cmdline.screenpos.col + #"E2eFoo " - 1,
+          m.position[2],
+          vim.inspect({ m.position, cmdline.screenpos })
+        )
+      end)
+    end)
+
+    describe("in insert mode", function()
+      before_each(function()
+        lua("vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'apple', 'apricot', 'banana', '' }) == nil")
+        lua("vim.api.nvim_win_set_cursor(0, { 4, 0 }) == nil")
+      end)
+
+      it("lists matches next to the cursor", function()
+        input("ia<C-n>")
+        local m = wait_for("two items", function()
+          local current = current_menu()
+          return current and #current.lines == 2 and current
+        end)
+        assert.same({ "apple", "apricot" }, m.lines)
+      end)
+
+      it("moves the selection and inserts the choice", function()
+        input("ia<C-n>")
+        selected(1)
+        input("<C-n>")
+        selected(2)
+        input("<C-y>")
+        no_menu()
+        wait_for("the text", function()
+          return lua("vim.api.nvim_get_current_line()") == "apricot"
+        end)
+      end)
+
+      it("closes on leaving insert mode", function()
+        input("ia<C-n>")
+        menu()
+        input("<esc>")
+        no_menu()
+        mode("n")
+      end)
+
+      it("shows the menu text and kind of an item", function()
+        input(
+          "i<cmd>lua vim.fn.complete(1, { { word = 'one', kind = 'Function', menu = 'extra' }, { word = 'two' } })<cr>"
+        )
+        local line = menu().lines[1]
+        assert.truthy(line:find("one", 1, true), line)
+        assert.truthy(line:find("extra", 1, true), line)
+        assert.truthy(line:find("Function", 1, true), line)
+      end)
+
+      it("keeps a multi-line item on one line", function()
+        input("i<cmd>lua vim.fn.complete(1, { { word = 'one', menu = 'line1\\nline2' }, { word = 'two' } })<cr>")
+        local m = wait_for("two items", function()
+          local current = current_menu()
+          return current and #current.lines == 2 and current
+        end)
+        assert.truthy(m.lines[1]:find("one", 1, true), m.lines[1])
+      end)
+
+      it("caps its height and scrolls to the selection", function()
+        local words = {}
+        for i = 1, 25 do
+          words[i] = ("{ word = 'word%d' }"):format(i)
+        end
+        input("i<cmd>lua vim.fn.complete(1, { " .. table.concat(words, ", ") .. " })<cr>")
+        local m = wait_for("all the items", function()
+          local current = current_menu()
+          return current and #current.lines == 25 and current
+        end)
+        assert.is_true(m.height <= 20)
+        input(string.rep("<C-n>", 24))
+        wait_for("the last item", function()
+          local current = current_menu()
+          return current and current.selected == 25
+        end)
+        assert.equal("word25", lua("vim.api.nvim_get_current_line()"))
+      end)
+    end)
+  end)
+
   describe("hover with two language servers", function()
     local function start(...)
       local answers = { ... }
