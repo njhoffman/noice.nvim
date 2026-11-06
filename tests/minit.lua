@@ -14,7 +14,11 @@ require("lazy.minit").setup({
   spec = {
     {
       dir = vim.uv.cwd(),
-      opts = {},
     },
   },
 })
+
+-- mini.test only schedules its cases. Stay here until it quits, or the cases run while Neovim is already exiting.
+vim.wait(10 * 60 * 1000, function()
+  return false
+end, 50)

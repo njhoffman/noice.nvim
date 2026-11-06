@@ -1,4 +1,4 @@
--- Runs hover cases in a clean Neovim, because the hover view does not open under the test runner.
+-- Runs hover cases in a clean Neovim, so noice is fully set up and shares no state with other specs.
 -- Usage: nvim --headless --clean -u NONE -l tests/lsp/hover_driver.lua <nui path> <json list of cases>
 -- A case is a list of markdown strings, one per client. false stands for a client with no result.
 -- Prints a JSON list of { notes = string[], lines = string[]|vim.NIL } to stdout.

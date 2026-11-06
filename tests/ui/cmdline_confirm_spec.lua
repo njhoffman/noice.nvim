@@ -27,6 +27,12 @@ local function settle()
 end
 
 describe("cmdline confirm", function()
+  after_each(function()
+    -- An open cmdline counts as blocking for every spec after this one
+    Cmdline.cmdlines = {}
+    Cmdline.active = nil
+  end)
+
   before_each(function()
     Cmdline.confirm = nil
     Cmdline._on_hide = nil

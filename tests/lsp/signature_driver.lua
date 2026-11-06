@@ -1,4 +1,4 @@
--- Runs signature cases in a clean Neovim, because docs views do not open under the test runner.
+-- Runs signature cases in a clean Neovim, so noice is fully set up and shares no state with other specs.
 -- Usage: nvim --headless --clean -u NONE -l tests/lsp/signature_driver.lua <nui path>
 -- Prints JSON describing the windows around a repeated signature request to stdout.
 vim.opt.rtp:prepend(vim.fn.getcwd())

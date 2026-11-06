@@ -151,7 +151,16 @@ describe("filter", function()
 
     it("unknown filter key returns false", function()
       local m = msg("msg_show", "echo")
-      assert.is_false(Filter.is(m, { nonexistent_key = true }))
+      local notify = vim.notify
+      local notes = {}
+      vim.notify = function(text)
+        notes[#notes + 1] = text
+      end
+      local ok, ret = pcall(Filter.is, m, { nonexistent_key = true })
+      vim.notify = notify
+      assert.is_true(ok)
+      assert.is_false(ret)
+      assert.truthy(notes[1]:find("Unknown filter key nonexistent_key", 1, true))
     end)
   end)
 
