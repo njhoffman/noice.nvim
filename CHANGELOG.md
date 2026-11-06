@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [4.16.5] - 2026-11-06
+
+### Fixed
+
+- An LSP progress message no longer stays in the history when its server stops before finishing.
+
 ## [4.16.4] - 2026-11-06
 
 ### Added

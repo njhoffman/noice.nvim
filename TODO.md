@@ -32,6 +32,13 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
 - [x] **`checkhealth.info` calls an undefined global.** (p3) [bug] `lua/noice/health.lua:24` calls `info`, but the
       locals at the top of the file define only `start`, `ok`, `warn` and `error`. Latent: nothing calls `log.info` on
       that path today. Fix: add `local info = vim.health.info`. This is one of the 8 selene errors.
+- [ ] **An error during `Router.update` stops routing for good.** (p3) [bug] `M._updating` is set before the work and
+      reset only at the end of `lua/noice/message/router.lua`'s `M.update`, with no protection between. An error thrown
+      there leaves it true, and every later update returns early. From reading the code, not reproduced.
+
+- [x] **A progress message stays when its server stops.** (p3) [bug] `M._update` in `lua/noice/lsp/progress.lua` closed the
+      message and then added it again, so it stayed in the history with a frozen spinner. Found by
+      `tests/e2e/ui_spec.lua`.
 
 ## 2. Overrides in ~/.config/nvim
 
@@ -61,10 +68,6 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
 - [ ] **Move stock noice defaults out of `configs/noice/`.** (p3) [chore] Check which entries in the config's `lsp.lua`
       and `views.lua` just repeat defaults, now that the plugin is under your control. Also note `lsp.override` enables
       `vim.lsp.util.stylize_markdown`, deprecated in Neovim's `deprecated.txt`; see section 3.
-
-- [ ] **An error during `Router.update` stops routing for good.** (p3) [bug] `M._updating` is set before the work and
-      reset only at the end of `lua/noice/message/router.lua`'s `M.update`, with no protection between. An error thrown
-      there leaves it true, and every later update returns early. From reading the code, not reproduced.
 
 ## 3. Neovim 0.11-0.13 compatibility
 
@@ -141,9 +144,9 @@ reviewed by reading the diff and has not been run.
       true and `Router.update` returned at once. `tests/minit.lua` now stays alive until mini.test quits, and no longer
       sets noice up, so specs control their own setup. Separately, `lazy.minit` updates plugins on each run unless
       `LAZY_OFFLINE` is set.
-- [ ] **Add tests for the rest of the untested core.** (p2) [test] `ui/cmdline` now has `tests/ui/cmdline_spec.lua`, and
-      `tests/e2e/ui_spec.lua` drives real keys through a terminal UI in a pty, including hover with two language servers.
-      Still none: LSP progress, the popupmenu, `view/scrollbar`, the snacks and `notify_send` backends.
+- [ ] **Add tests for the rest of the untested core.** (p3) [test] `tests/e2e/ui_spec.lua` now also covers LSP progress and
+      the popupmenu with real events and keys. Still none: `view/scrollbar`, and the snacks and `notify_send` backends.
+      The cmp popupmenu backend has none either, and needs nvim-cmp.
 - [ ] **Decide whether the hover and signature specs stay in subprocesses.** (p3) [test] Hover opened its window in
       process in a one-off check, so the drivers are no longer forced. They still isolate noice's state, so moving them is
       optional.
