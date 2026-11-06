@@ -495,7 +495,7 @@ require("noice").setup({
 | **replace** | `boolean`        | `false`          | when true, messages routing to the same notify instance will replace existing messages instead of pushing a new notification every time |
 | **merge**   | `boolean`        | `false`          | Merge messages into one Notification or create separate notifications                                                                   |
 | **level**   | `number\|string` | `nil`            | notification level. Uses `Message.level` if available.                                                                                  |
-| **on_notify** | `function`     | `nil`            | called with `{ content, level, title, messages }` for each notification this backend shows, for example to log them. `level` is the one the notification uses. Not called by the `snacks` backend. |
+| **on_notify** | `function`     | `nil`            | called with `{ content, level, title, messages }` for each notification this backend shows, for example to log them. `level` is the one the notification uses. |
 
 ### Virtual Text Options
 

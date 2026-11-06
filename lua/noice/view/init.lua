@@ -180,6 +180,20 @@ function View:display()
   return true
 end
 
+-- Runs the `on_notify` option of a notification backend
+---@param info {content: string, level?: string|number, title?: string, messages: NoiceMessage[]}
+function View:on_notify(info)
+  if not self._opts.on_notify then
+    return
+  end
+  local ok, err = pcall(self._opts.on_notify, info)
+  if not ok then
+    -- A failing hook must not lose the notification. error_once only reports each error once, so it
+    -- can't loop through this view, and it formats its result again, hence the escaped %.
+    Util.error_once("`on_notify` failed: %s", (tostring(err):gsub("%%", "%%%%")))
+  end
+end
+
 ---@param old NoiceViewOptions
 ---@param new NoiceViewOptions
 function View:reset(old, new) end

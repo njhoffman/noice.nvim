@@ -94,6 +94,8 @@ function M:_notify(msg)
     end
   end
 
+  self:on_notify({ content = opts.msg, level = opts.level, title = opts.title, messages = msg.messages })
+
   self.notif_id = Snacks.notifier.notify(opts.msg, opts.level, opts)
   for _, m in ipairs(msg.messages) do
     m.opts.notify_id = self.notif_id
