@@ -15,10 +15,12 @@ function M.plugin(repo)
   return path
 end
 
+-- With -n, since each Neovim is killed with a modified buffer, and their swap files would add up until
+-- Neovim fails with E326.
 ---@param env? table<string, string> extra environment for tests/e2e/child_init.lua
 function M.start(env)
   local sock = vim.fn.tempname()
-  local job = vim.fn.jobstart({ vim.v.progpath, "--clean", "--listen", sock, "-u", "tests/e2e/child_init.lua" }, {
+  local job = vim.fn.jobstart({ vim.v.progpath, "--clean", "-n", "--listen", sock, "-u", "tests/e2e/child_init.lua" }, {
     pty = true,
     width = 100,
     height = 30,
