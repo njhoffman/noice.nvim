@@ -1,5 +1,6 @@
 -- Runs hover cases in a clean Neovim, because the hover view does not open under the test runner.
--- Usage: nvim --headless --clean -u NONE -l tests/lsp/hover_driver.lua <nui path> <json list of markdown strings>
+-- Usage: nvim --headless --clean -u NONE -l tests/lsp/hover_driver.lua <nui path> <json list of cases>
+-- A case is a list of markdown strings, one per client. false stands for a client with no result.
 -- Prints a JSON list of { notes = string[], lines = string[]|vim.NIL } to stdout.
 vim.opt.rtp:prepend(vim.fn.getcwd())
 vim.opt.rtp:append(_G.arg[1])
@@ -19,9 +20,13 @@ local Docs = require("noice.lsp.docs")
 local Hover = require("noice.lsp.hover")
 
 local results = {}
-for _, value in ipairs(vim.json.decode(_G.arg[2])) do
+for _, clients in ipairs(vim.json.decode(_G.arg[2])) do
   notes = {}
-  Hover.on_hover(nil, { contents = { kind = "markdown", value = value } }, { bufnr = 0 })
+  local responses = {}
+  for id, value in ipairs(clients) do
+    responses[id] = value and { result = { contents = { kind = "markdown", value = value } } } or {}
+  end
+  Hover.on_hover(responses, { bufnr = 0 })
   -- Docs.get clears the message, so read it directly
   local message = Docs._messages.hover
   vim.wait(500, function()
