@@ -2,8 +2,15 @@ local M = {}
 
 local _tick = 1
 
+-- Called on every change, so the router can sleep until there is something to route
+---@type fun()?
+M.on_change = nil
+
 local function next_tick()
   _tick = _tick + 1
+  if M.on_change then
+    M.on_change()
+  end
   return _tick
 end
 
@@ -21,7 +28,7 @@ end
 function M.add(message)
   if not (message:is_empty() and next(message.opts) == nil) then
     message.tick = next_tick()
-    message.mtime = vim.fn.localtime()
+    message.mtime = os.time()
     M._history[message.id] = message
     M._messages[message.id] = message
   end

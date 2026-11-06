@@ -132,16 +132,18 @@ function M.interval(ms, fn, opts)
     return timer and not timer:is_closing()
   end
 
+  -- Closes the timer, since a timer only stopped still counts as running and could never restart
   function T.stop()
     if timer and T.running() then
       timer:stop()
+      timer:close()
     end
   end
 
   function T.fn()
     pcall(fn)
     if timer and T.running() and not T.keep() then
-      timer:stop()
+      T.stop()
     elseif T.keep() and not T.running() then
       timer = vim.defer_fn(T.fn, ms)
     end

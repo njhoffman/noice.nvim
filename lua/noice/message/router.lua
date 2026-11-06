@@ -29,13 +29,32 @@ M._updating = false
 
 function M.enable()
   if not M._updater then
-    M._updater = Util.interval(Config.options.throttle, Util.protect(M.update))
+    -- Runs only while the manager has changes the router has not seen, including views that failed to
+    -- display, which keep the tick unseen so they are retried.
+    M._updater = Util.interval(Config.options.throttle, Util.protect(M.update), {
+      enabled = function()
+        return M._tick ~= Manager.tick()
+      end,
+    })
+    local function wake()
+      if M._updater then
+        M._updater()
+      end
+    end
+    Manager.on_change = function()
+      if vim.in_fast_event() then
+        vim.schedule(wake)
+      else
+        wake()
+      end
+    end
   end
   M._updater()
 end
 
 function M.disable()
   if M._updater then
+    Manager.on_change = nil
     M._updater.stop()
     M._updater = nil
     Manager.clear()
