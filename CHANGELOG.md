@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [4.16.0] - 2026-11-05
+
+### Fixed
+
+- Hover with several LSP clients shows every client's answer under its name, instead of focusing the window on the first
+  `K` with only the first answer. Clients with empty contents are ignored
+  ([folke#1231](https://github.com/folke/noice.nvim/pull/1231)).
+- Requesting signature help again no longer moves the cursor into the open window
+  ([folke#1215](https://github.com/folke/noice.nvim/pull/1215)).
+- Confirm dialogs no longer lose their message after a redraw or when the same dialog repeats. A new prompt arriving just
+  after one closes no longer raises an error ([folke#1230](https://github.com/folke/noice.nvim/pull/1230)).
+
+### Changed
+
+- `lsp.hover.on_hover` now takes `(results, ctx)` as given by `vim.lsp.buf_request_all`, not a single client's response.
+
 ## [4.15.0] - 2026-11-05
 
 ### Added

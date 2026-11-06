@@ -85,15 +85,15 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
 None of these is merged here. "Applies" means `git apply --check` passed against this fork on 2026-11-05; behavior was
 reviewed by reading the diff and has not been run.
 
-- [ ] **Take #1231 for multi-client hover.** (p2) [bug] Applies. A single `K` with several clients focuses the float and
-      shows only the first answer. Uses `buf_request_all` and merges results. Recommended over #1177 from the March table,
-      which targets the same problem. Note it changes the `on_hover` signature, so the #1232 regression spec should
-      be written against whichever is merged first.
-- [ ] **Take #1230 for confirm popups, with a fix.** (p2) [bug] Applies. Fixes empty and repeated confirm windows (#1178,
-      likely #1226). Concern: the scheduled closure reads `M.confirm.hidden`, but `M.confirm` can be set to nil before it
-      runs, which would raise inside `vim.schedule`. Capture the table in a local first.
-- [ ] **Take #1215 for signature focus stealing.** (p2) [bug] Applies. One-line `focus()` to `win()` change, and you run
-      `signature.auto_open`. Side effect: a manual signature request no longer jumps into an open window.
+- [x] **Take #1231 for multi-client hover.** (p2) [bug] Merged with `buf_request_all`, plus a fix for clients with empty
+      contents, which left a client name with nothing under it. Replaces #1177 from the March table. Changes the
+      `on_hover` signature to `(results, ctx)`.
+- [x] **Take #1230 for confirm popups, with a fix.** (p2) [bug] Merged, plus a fix: the scheduled callback read `M.confirm`
+      after it could be set to nil, which raised an error and left the old message behind. Not fixed: `M.confirm` stays
+      set after a dialog is answered, because a redraw needs it, so a later `input()` with an identical prompt would bring
+      the old message back. Unlikely in practice.
+- [x] **Take #1215 for signature focus stealing.** (p2) [bug] Merged as is. A manual signature request no longer jumps into
+      an open window.
 - [ ] **Take #1207 for longer code fences, with cleanup.** (p3) [feature] Applies. Stores the closing pattern in a
       module-level variable; a local would do. A closing line is matched by prefix, so longer fences and fences with
       info strings also close the block.
@@ -126,9 +126,9 @@ reviewed by reading the diff and has not been run.
       by the time specs run, and the hover window never opened even after `enable()` and `Router.update()`. Cause not
       found, so `tests/lsp/hover_spec.lua` runs `tests/lsp/hover_driver.lua` in a clean subprocess. Fixing this would
       make view-level specs simple. Separately, `lazy.minit` updates plugins on each run unless `LAZY_OFFLINE` is set.
-- [ ] **Add tests for the untested core.** (p2) [test] Specs cover filter, manager, markdown parsing, ffi and `tail`.
-      `ui/msg`, `ui/cmdline`, `router` and `lsp/*` have none, which is where the bugs above live. Start with hover and
-      `msg_show` event handling.
+- [ ] **Add tests for the untested core.** (p2) [test] Specs cover filter, manager, markdown, hover, signature, confirm
+      dialogs, the notify view and `tail`. `ui/msg`, the rest of `ui/cmdline`, `router` and LSP progress have none. Start
+      with `msg_show` event handling.
 - [ ] **Settle the fork's identity in repo metadata.** (p3) [chore] `lazy.lua` still names `folke/noice.nvim`, and
       the CI and update workflows call `folke/github`. On GitHub the repo is not marked as a fork. Decide what should
       point at this repo; check how `lazy.lua` behaves under your `njhoffman/noice.nvim` spec before changing it.
