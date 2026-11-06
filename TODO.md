@@ -17,7 +17,7 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
       Fix: drop code blocks with no lines, then drop a blank line left at the start of the result. Tested as an
       in-memory patch: no error, popup shows `hello`, and a fence-only hover reports "No information available". Dropping
       only the empty block does not fix it. Done in `markdown.parse`, with `tests/lsp/hover_spec.lua` and parse cases.
-- [ ] **Consecutive identical messages are dropped.** (p2) [bug] Upstream #1195, closed as stale without a fix.
+- [x] **Consecutive identical messages are dropped.** (p2) [bug] Upstream #1195, closed as stale without a fix.
       `State.skip` at `lua/noice/ui/msg.lua:92` discards a `msg_show` equal to the previous one, however much later it
       arrives, so `:echo "test"` run twice shows once. Confirm dialogs repeating (#1226) look like the same family; see
       #1230 in section 4. Fix needs a way to tell a redraw replay from a real repeat. Worth checking whether the
@@ -64,12 +64,16 @@ The PR tables further down are from the 2026-03-28 review, kept as written. Sect
 
 ## 3. Neovim 0.11-0.13 compatibility
 
-- [ ] **`msg_show` handler ignores newer event arguments.** (p2) [bug] Current signature is `kind, content, replace_last,
-      history, append, id, trigger`; `M.on_show` (`lua/noice/ui/msg.lua:85`) reads only the first three. Expected
-      effects, from reading the code and not yet observed: `append` output (`:echon`) splits into separate messages;
-      `history = false` messages land in history; messages updated by `id` stack instead of replacing. Upstream #1197
-      (`:verbose set` losing "Last set from") may be related. Fix: capture real events with `debug = true`, then
-      handle `append` and `id` first.
+- [x] **`msg_show` handler ignores newer event arguments.** (p2) [bug] Current signature is `kind, content, replace_last,
+      history, append, id, trigger`. Captured on 0.13-dev: every message gets a new `id`, `redraw!` replays nothing, `:echon`
+      sends `append = true`, and `nvim_echo` with `id` reuses it. `M.on_show` now handles `append` and `id`, and uses `id`
+      to keep real repeats, with `tests/ui/msg_spec.lua`.
+- [ ] **Decide what `history = false` messages do.** (p3) [bug] `:echo` arrives with `history = false` but still lands in
+      noice's history, so `:Noice` lists messages `:messages` does not. Filtering them changes what `:Noice` shows, so it is
+      a choice and not a plain fix. Upstream #1197 (`:verbose set` losing "Last set from") is still unchecked: the capture
+      ran with `--clean`, where no option has a "Last set from" line.
+- [ ] **Check confirm events on a real UI.** (p3) [test] A headless `confirm()` sent no `msg_show` at all on 0.13-dev, so
+      `M.on_confirm` still skips without using `id`. Its repeat behaviour (#1226) is unverified.
 - [ ] **Decide the position on ui2.** (p3) [feature] Upstream #1201: with `vim._core.ui2` enabled the native cmdline shows
       alongside noice's. The repo has no ui2 handling and your config does not enable it, so nothing is broken for you
       today. Minimum: a `:checkhealth` warning. Longer term: decide whether noice should coexist with it at all.

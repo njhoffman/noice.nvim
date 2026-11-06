@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [4.16.1] - 2026-11-05
+
+### Fixed
+
+- Repeating a message, such as running `:echo "test"` twice, now shows it each time on Neovim versions that send message ids.
+- `:echon` output continues the previous message instead of starting a new one.
+- `nvim_echo` with an `id` updates that message instead of adding another.
+
 ## [4.16.0] - 2026-11-05
 
 ### Fixed

@@ -47,6 +47,10 @@ M.last = nil
 ---@type NoiceMessage[]
 M._messages = {}
 
+-- Weak, so messages that left the history can go. Neovim gives every message an id.
+---@type table<integer|string, NoiceMessage>
+M._by_id = setmetatable({}, { __mode = "v" })
+
 M._did_setup = false
 
 function M.setup()
@@ -82,14 +86,24 @@ end
 
 ---@param kind MsgKind
 ---@param content NoiceContent[]
-function M.on_show(event, kind, content, replace_last)
+---@param replace_last boolean
+---@param append? boolean continues the previous message, as `:echon` does (newer Neovim)
+---@param id? integer|string same id means an update of that message (newer Neovim)
+function M.on_show(event, kind, content, replace_last, _, append, id)
   if kind == M.kinds.return_prompt then
     return M.on_return_prompt()
   elseif kind == M.kinds.confirm or kind == M.kinds.confirm_sub or kind == M.kinds.number_prompt then
     return M.on_confirm(event, kind, content)
   end
 
-  if State.skip(event, kind, content, replace_last) then
+  -- A new id means a real repeat, not a replay. Without ids, repeats stay indistinguishable from replays.
+  if State.skip(event, kind, content, replace_last, id) then
+    return
+  end
+
+  if append and M.last and M.last.kind == kind then
+    M.last:append(content)
+    Manager.add(M.last)
     return
   end
 
@@ -103,18 +117,18 @@ function M.on_show(event, kind, content, replace_last)
     message = M.get(event, kind)
     Hacks.fix_nohlsearch()
   else
-    message = Message(event, kind)
+    message = id and M._by_id[id] or Message(event, kind)
+    message.kind = kind
     message.cmdline = Cmdline.active
+  end
+  if id then
+    M._by_id[id] = message
   end
 
   message:set(content)
 
   message:trim_empty_lines()
-  if M.is_error(kind) then
-    message.level = "error"
-  elseif M.is_warning(kind) then
-    message.level = "warn"
-  end
+  message.level = M.is_error(kind) and "error" or M.is_warning(kind) and "warn" or nil
 
   M.last = message
 
