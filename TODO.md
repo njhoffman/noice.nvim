@@ -110,14 +110,13 @@ reviewed by reading the diff and has not been run.
       the old message back. Unlikely in practice.
 - [x] **Take #1215 for signature focus stealing.** (p2) [bug] Merged as is. A manual signature request no longer jumps into
       an open window.
-- [ ] **Take #1207 for longer code fences, with cleanup.** (p3) [feature] Applies. Stores the closing pattern in a
-      module-level variable; a local would do. A closing line is matched by prefix, so longer fences and fences with
-      info strings also close the block.
-- [ ] **Take #1216 for `lsp.signature.silent`.** (p3) [feature] Applies. Small, mirrors `lsp.hover.silent`.
-- [ ] **Review #1218 before taking.** (p3) [bug] Applies. Flips the completion popup above the cursor near the bottom.
-      Compares `screenrow()` (editor-wide) with `winheight(0)` (window), so it can misjudge with splits or a tabline, and
-      uses `#state.items` as height. Your config places the popupmenu with `relative = "editor"`, so check whether this
-      path runs for you at all.
+- [x] **Take #1207 for longer code fences, with cleanup.** (p3) [feature] Taken as a local closing check that follows
+      CommonMark, not the PR's module-level prefix match: a closing fence is at least as long as the opening one, with
+      nothing after it. So a ```` ```lua ```` line inside a block now stays as code.
+- [x] **Take #1216 for `lsp.signature.silent`.** (p3) [feature] Taken as it was.
+- [x] **Review #1218 before taking.** (p3) [bug] Reproduced in a real UI: the menu covered the line being typed. Reworked,
+      since the PR compared `screenrow()` with `winheight(0)` and used `#state.items` as the height. Now all in screen
+      rows, opening on the side with more room and capped to it. This path runs for every insert-mode menu.
 - [ ] **Optional: #1200 and #1220.** (p3) [feature] Both apply. #1200 renders markdown headings via `MarkdownH1`-style
       groups, which your colorscheme would need to define. #1220 is a docs-only icon fix.
 - [ ] **Consider #1212 for Neovide transparency.** (p3) [bug] Applies. Keeps user `winblend` on multigrid UIs. Only matters

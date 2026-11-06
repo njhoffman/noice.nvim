@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [4.18.0] - 2026-11-06
+
+### Added
+
+- `lsp.signature.silent` hides the message when no signature help is available, as `lsp.hover.silent` does for hover.
+- Markdown code blocks can open with more than three backticks.
+
+### Fixed
+
+- The completion popup near the bottom of the screen no longer covers the line being typed. It opens above the cursor if
+  that side has more room, and shrinks when it fits on neither side.
+- A code block now closes only at a fence as long as its opening one with nothing after it, so a fence inside a longer
+  block, or a ```` ```lua ```` line inside a block, stays as code.
+
 ## [4.17.0] - 2026-11-06
 
 ### Added
