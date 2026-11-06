@@ -17,6 +17,14 @@ function M.is_code_block(line)
   return line and line:find("^%s*```")
 end
 
+-- A closing fence is at least as long as the opening one, with nothing after it
+---@param line? string
+---@param opening string the opening fence
+local function closes_code_block(line, opening)
+  local fence = line and line:match("^%s*(```+)%s*$")
+  return fence ~= nil and #fence >= #opening
+end
+
 function M.is_empty(line)
   return line and line:find("^%s*$")
 end
@@ -95,9 +103,10 @@ function M.parse(text, opts)
       end
     elseif M.is_code_block(line) then
       ---@type string
-      local lang = line:match("```%s*(%S+)") or opts.ft or "text"
+      local fence, lang = line:match("^%s*(```+)%s*(%S*)")
+      lang = lang ~= "" and lang or opts.ft or "text"
       local block = { lang = lang, code = {} }
-      while lines[l + 1] and not M.is_code_block(lines[l + 1]) do
+      while lines[l + 1] and not closes_code_block(lines[l + 1], fence) do
         table.insert(block.code, lines[l + 1])
         l = l + 1
       end
