@@ -1,80 +1,16 @@
--- Real keys through a real terminal UI: a Neovim in a pty, driven and inspected over RPC.
--- Events only match real use with a UI attached. Without one, for example, confirm() returns at once.
+local Driver = require("e2e.driver")
 
 describe("e2e", function()
-  local job, chan, sock
-
-  local function rpc(...)
-    return vim.rpcrequest(chan, ...)
-  end
-
-  local function lua(code, ...)
-    return rpc("nvim_exec_lua", "return " .. code, { ... })
-  end
-
-  local function input(keys)
-    rpc("nvim_input", keys)
-  end
-
-  local function wait_for(what, fn)
-    local value
-    local ok = vim.wait(5000, function()
-      value = fn()
-      return value
-    end, 10)
-    assert.is_true(ok, "timed out waiting for " .. what)
-    return value
-  end
-
-  -- The float containing `text`
-  local function float(text)
-    return wait_for("a float with " .. text, function()
-      for _, content in ipairs(lua("E2E.floats()")) do
-        if content:find(text, 1, true) then
-          return content
-        end
-      end
-    end)
-  end
-
-  local function no_float(text)
-    wait_for("no float with " .. text, function()
-      for _, content in ipairs(lua("E2E.floats()")) do
-        if content:find(text, 1, true) then
-          return false
-        end
-      end
-      return true
-    end)
-  end
-
-  local function mode(expected)
-    wait_for("mode " .. expected, function()
-      return rpc("nvim_get_mode").mode == expected
-    end)
-  end
+  local nvim, rpc, lua, input, wait_for, float, no_float, mode
 
   before_each(function()
-    sock = vim.fn.tempname()
-    job = vim.fn.jobstart({ vim.v.progpath, "--clean", "--listen", sock, "-u", "tests/e2e/child_init.lua" }, {
-      pty = true,
-      width = 100,
-      height = 30,
-      env = { NOICE_E2E_NUI = vim.fn.stdpath("data") .. "/lazy/nui.nvim", TERM = "xterm-256color" },
-    })
-    assert.is_true(vim.wait(5000, function()
-      return vim.uv.fs_stat(sock) ~= nil
-    end, 10))
-    chan = vim.fn.sockconnect("pipe", sock, { rpc = true })
-    wait_for("noice to start", function()
-      return rpc("nvim_get_vvar", "vim_did_enter") == 1 and lua("E2E.running()")
-    end)
+    nvim = Driver.start()
+    rpc, lua, input, wait_for = nvim.rpc, nvim.lua, nvim.input, nvim.wait_for
+    float, no_float, mode = nvim.float, nvim.no_float, nvim.mode
   end)
 
   after_each(function()
-    pcall(vim.fn.chanclose, chan)
-    vim.fn.jobstop(job)
-    vim.fn.jobwait({ job }, 2000)
+    nvim.stop()
   end)
 
   describe("cmdline", function()

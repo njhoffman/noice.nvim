@@ -3,7 +3,35 @@ vim.opt.rtp:prepend(vim.fn.getcwd())
 vim.opt.rtp:append(vim.env.NOICE_E2E_NUI)
 vim.o.shiftwidth = 2
 
-require("noice").setup({ notify = { enabled = false }, health = { checker = false } })
+-- Set by tests/e2e/notify_spec.lua to run against a real notification plugin
+local backend = vim.env.NOICE_E2E_BACKEND
+local opts = { notify = { enabled = false }, health = { checker = false } }
+
+if backend then
+  vim.opt.rtp:append(vim.env.NOICE_E2E_PLUGIN)
+  vim.o.termguicolors = true
+  _G.NoticedByHook = {}
+  opts.notify.enabled = true
+  opts.views = {
+    notify = {
+      backend = backend,
+      fallback = "popup",
+      on_notify = function(info)
+        if vim.g.e2e_hook_fails then
+          error("hook failed")
+        end
+        table.insert(_G.NoticedByHook, { content = info.content, level = info.level, title = info.title })
+      end,
+    },
+  }
+  if backend == "snacks" then
+    require("snacks").setup({ notifier = { enabled = true } })
+  else
+    require("notify").setup({ background_colour = "#000000", stages = "static" })
+  end
+end
+
+require("noice").setup(opts)
 
 local E2E = {}
 _G.E2E = E2E
@@ -50,6 +78,55 @@ function E2E.menu()
     width = vim.api.nvim_win_get_width(menu.winid),
     position = vim.api.nvim_win_get_position(menu.winid),
   }
+end
+
+-- Notifications the real plugin received, oldest first, as { message, level, title }
+function E2E.notifications()
+  local ret = {}
+  if backend == "snacks" then
+    local history = Snacks.notifier.get_history({ reverse = false })
+    table.sort(history, function(a, b)
+      return a.added < b.added or (a.added == b.added and tostring(a.id) < tostring(b.id))
+    end)
+    for _, notif in ipairs(history) do
+      ret[#ret + 1] = { message = notif.msg, level = notif.level:lower(), title = notif.title or "" }
+    end
+  else
+    for _, record in ipairs(require("notify").history({ include_hidden = true })) do
+      ret[#ret + 1] = {
+        message = table.concat(record.message, "\n"),
+        level = record.level:lower(),
+        title = record.title[1] or "",
+      }
+    end
+  end
+  return vim.tbl_filter(function(n)
+    return not n.message:find("E1568", 1, true)
+  end, ret)
+end
+
+-- The text of each open notification window
+function E2E.notification_texts()
+  local ret = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "notify" or vim.bo[buf].filetype == "snacks_notif" then
+      ret[#ret + 1] = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
+    end
+  end
+  return ret
+end
+
+-- The number of notification windows open now
+function E2E.notification_windows()
+  local count = 0
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local ft = vim.bo[vim.api.nvim_win_get_buf(win)].filetype
+    if ft == "notify" or ft == "snacks_notif" then
+      count = count + 1
+    end
+  end
+  return count
 end
 
 -- Whether the last menu seen still has a window, whatever noice itself remembers
