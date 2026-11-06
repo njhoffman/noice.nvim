@@ -143,9 +143,9 @@ reviewed by reading the diff and has not been run.
       true and `Router.update` returned at once. `tests/minit.lua` now stays alive until mini.test quits, and no longer
       sets noice up, so specs control their own setup. Separately, `lazy.minit` updates plugins on each run unless
       `LAZY_OFFLINE` is set.
-- [ ] **Add tests for the rest of the untested core.** (p3) [test] `tests/e2e/ui_spec.lua` now also covers LSP progress and
-      the popupmenu with real events and keys. Still none: `view/scrollbar`, and the snacks and `notify_send` backends.
-      The cmp popupmenu backend has none either, and needs nvim-cmp.
+- [ ] **Add tests for the rest of the untested core.** (p3) [test] `tests/e2e/notify_spec.lua` now runs the snacks and
+      notify backends against the real plugins. Still none: `view/scrollbar`, the `notify_send` backend, and the cmp
+      popupmenu backend, which needs nvim-cmp.
 - [ ] **Decide whether the hover and signature specs stay in subprocesses.** (p3) [test] Hover opened its window in
       process in a one-off check, so the drivers are no longer forced. They still isolate noice's state, so moving them is
       optional.

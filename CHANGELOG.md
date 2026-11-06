@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [4.17.0] - 2026-11-06
+
+### Added
+
+- The `on_notify` view option now also works with the `snacks` backend, so logging keeps working when switching backend.
+- End-to-end specs against the real snacks.nvim and nvim-notify plugins.
+
 ## [4.16.6] - 2026-11-06
 
 ### Fixed
