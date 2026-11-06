@@ -468,6 +468,23 @@ String or can also be a table like:
 <td>Set to <code>false</code> to hide the scrollbar.</td>
 </tr>
 <tr>
+<td> <b>tail</b> </td>
+<td>
+When set to <code>true</code>, the view scrolls to the bottom on open and whenever new messages are added. Useful
+for log-style views where the most recent messages are at the end.
+
+```lua
+require("noice").setup({
+  views = {
+    split = {
+      tail = true,
+    },
+  },
+})
+```
+
+</td>
+</tr>
 </table>
 
 ### Notify Options
