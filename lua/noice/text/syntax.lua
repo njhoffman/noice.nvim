@@ -6,10 +6,10 @@ end
 
 --- Highlights a region of the buffer with a given language
 ---@param buf buffer buffer to highlight. Defaults to the current buffer if 0
----@param ns number namespace for the highlights
+---@param _ns number unused, since syntax highlights have no namespace
 ---@param range {[1]:number, [2]:number, [3]: number, [4]: number} (table) Region to highlight {start_row, start_col, end_row, end_col}
 ---@param lang string treesitter language
-function M.highlight(buf, ns, range, lang)
+function M.highlight(buf, _ns, range, lang)
   vim.api.nvim_buf_call(buf, function()
     lang = fix(lang)
     local group = "@" .. lang:upper()

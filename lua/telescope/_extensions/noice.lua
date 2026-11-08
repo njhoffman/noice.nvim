@@ -66,7 +66,7 @@ function M.previewer()
 end
 
 function M.mappings()
-  return function(prompt_bufnr, map)
+  return function(prompt_bufnr, _map)
     actions.select_default:replace(function()
       actions.close(prompt_bufnr)
       local selection = action_state.get_selected_entry()

@@ -194,9 +194,9 @@ function View:on_notify(info)
   end
 end
 
----@param old NoiceViewOptions
----@param new NoiceViewOptions
-function View:reset(old, new) end
+---@param _old NoiceViewOptions
+---@param _new NoiceViewOptions
+function View:reset(_old, _new) end
 
 function View:show()
   Util.error("Missing implementation `View:show()` for %s", self)

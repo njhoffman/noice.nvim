@@ -1,7 +1,6 @@
 local require = require("noice.util.lazy")
 
 local Config = require("noice.config")
-local Hacks = require("noice.util.hacks")
 
 local M = {}
 
@@ -19,10 +18,10 @@ M.CR = M.t("<cr>")
 M.ESC = M.t("<esc>")
 M.BS = M.t("<bs>")
 M.EXIT = M.t("<C-\\><C-n>")
-M.LUA_CALLBACK = "\x80\253g"
+M.LUA_CALLBACK = "\128\253g"
 M.RIGHT = M.t("<right>")
 M.LEFT = M.t("<left>")
-M.CMD = "\x80\253h"
+M.CMD = "\128\253h"
 
 ---@generic F: fun()
 ---@param fn F

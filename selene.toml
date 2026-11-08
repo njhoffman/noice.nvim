@@ -2,3 +2,5 @@ std="vim"
 
 [lints]
 mixed_table="allow"
+# _G.require skips the lazy require on purpose, and _G.noice_C caches the ffi cdef across reloads
+global_usage="allow"

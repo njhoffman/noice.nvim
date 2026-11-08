@@ -1,7 +1,6 @@
 local require = require("noice.util.lazy")
 
 local Config = require("noice.config")
-local Lsp = require("noice.lsp")
 local Treesitter = require("noice.text.treesitter")
 local Util = require("noice.util")
 
@@ -36,11 +35,11 @@ M.log = {
   },
   ---@type NoiceHealthLog
   notify = {
-    start = function(msg) end,
+    start = function() end,
     info = function(msg, ...)
       Util.info(msg:format(...))
     end,
-    ok = function(msg, ...) end,
+    ok = function() end,
     warn = function(msg, ...)
       Util.warn_once(msg:format(...))
     end,
@@ -73,16 +72,16 @@ function M.check(opts)
 
   local uis = vim.api.nvim_list_uis()
   for _, ui in ipairs(uis) do
-    local ok = true
+    local supported = true
     for _, ext in ipairs({ "ext_cmdline", "ext_popupmenu", "ext_messages" }) do
       if ui[ext] then
-        ok = false
+        supported = false
         log.error(
           "You're using a GUI that uses " .. ext .. ". Noice can't work when the GUI has " .. ext .. " enabled."
         )
       end
     end
-    if ok then
+    if supported then
       if ui.chan == 0 then
         log.ok("You're not using a GUI")
       else
@@ -243,11 +242,11 @@ function M.get_source(fn)
       plugin = "unknown",
     }
   end
-  local info = debug.getinfo(fn, "S")
-  local source = info.source:sub(2)
+  local fn_info = debug.getinfo(fn, "S")
+  local source = fn_info.source:sub(2)
   ---@class FunSource
   local ret = {
-    line = info.linedefined,
+    line = fn_info.linedefined,
     source = source,
     plugin = "unknown",
   }
@@ -257,8 +256,8 @@ function M.get_source(fn)
     ret.plugin = "nvim"
   else
     local opt = source:match("/pack/[^%/]-/opt/([^%/]-)/")
-    local start = source:match("/pack/[^%/]-/start/([^%/]-)/")
-    ret.plugin = opt or start or "unknown"
+    local start_plugin = source:match("/pack/[^%/]-/start/([^%/]-)/")
+    ret.plugin = opt or start_plugin or "unknown"
   end
   return ret
 end
