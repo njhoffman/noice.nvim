@@ -135,8 +135,9 @@ reviewed by reading the diff and has not been run.
 - [x] **Document the fork's `tail` option in the README.** (p2) [docs] Added to `doc/noice.nvim.txt` only (line 530).
       Upstream generates that file from the README, so a regenerate would remove it. Check other fork-only options at
       the same time.
-- [ ] **Make selene pass.** (p3) [chore] 7 errors, 24 warnings. All 7 errors are `bit` missing from `vim.yml` (false positive,
-      add it to globals). Then clear the unused-variable warnings.
+- [x] **Make selene pass.** (p3) [chore] Now 0 errors, 0 warnings. `bit` is a global in `vim.yml`, `global_usage` is allowed
+      since `_G.require` skips the lazy require on purpose, and the unused variables, shadowing and `\x` escapes are gone.
+      Selene still prints a `luajit` feature error for `lua_versions` in `vim.yml` on each run; it linted before and after.
 - [x] **Find out why views do not open under the test runner.** (p3) [test] mini.test only schedules its cases, so the
       `nvim -l` script ended and every spec ran with Neovim already exiting: `v:exiting` was `0`, `Util.is_exiting()` was
       true and `Router.update` returned at once. `tests/minit.lua` now stays alive until mini.test quits, and no longer

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [4.18.1] - 2026-11-07
+
+### Changed
+
+- The code now passes `selene` with no errors or warnings. No change in behaviour.
+
 ## [4.18.0] - 2026-11-06
 
 ### Added
